@@ -1,0 +1,47 @@
+ALTER VIEW dbo.VW_IMIS_Assess_Audit
+AS
+ (SELECT   
+STATUS,
+DecreaseRevenue as [7% Decrease in Revenue],
+DecreaseTNT as [7 Point Decrease in TNT],
+assess_audit.ID as [Account],
+AuditYear as [Audit Year],
+LowTNT as [Low TNT],
+AuditReason as [Reason for Audit],
+RepeatRevenue as [Repeated Revenue],
+RoundedRevenue as [Rounded Revenue],
+NoSecondTNT as [Secondary TNT],
+NoTNT as [Zero TNT],
+FORMAT (LowTNT_Cleared, 'MM/dd/yyyy') as [IMIS Low TNT Cleared],
+LowTNT_DROPCODE as [IMIS Low TNT Drop Code],
+FORMAT (DecreaseRevenue_Cleared,'MM/dd/yyyy') as [IMIS DecreaseRevenue Cleared] ,
+DecreaseRevenue_DROPCODE as [IMIS DecreaseRevenue Drop Code],
+FORMAT(DecreaseTNT_Cleared, 'MM/dd/yyyy') as [IMIS DecreaseTNT Cleared],
+DecreaseTNT_DROPCODE as [IMIS DecreaseTNT Drop Code],
+NoTNT_Cleared as [IMIS NoTNT Cleared],
+NoTNT_DROPCODE as [IMIS NoTNT Drop Code],
+RoundedRevenue_Cleared as [IMIS RoundedRevenue Cleared],
+RoundedRevenue_DROPCODE as [IMIS RoundedRevenue Drop Code],
+format(RepeatRevenue_Cleared,'MM/dd/yyyy') as [IMIS RepeatRevenue Cleared],
+RepeatRevenue_DROPCODE as [IMIS RepeatRevenue Drop Code],
+AuditChecked as [Audit],
+NoSecondTNT_Cleared as [IMIS Secondary TNT Cleared],
+NoSecondTNT_DROPCODE as [IMIS Secondary TNT Drop Code],
+BalanceDue as [Balance Due],
+FORMAT (BalanceDue_Cleared , 'MM/dd/yyyy') as [Balance Due Cleared],
+--LowTNT_Note +BalanceDue_Note+DecreaseRevenue_Note+DecreaseTNT_Note+RepeatRevenue_Note+RoundedRevenue_Note+NoTNT_Note+NoSecondTNT_note+Below1mil_note
+LowTNT_Note + BalanceDue_Note+ DecreaseRevenue_Note + DecreaseTNT_Note + RepeatRevenue_Note + RoundedRevenue_Note + NoTNT_Note + NoSecondTNT_note + Below1mil_note as [Audit Note],
+Miscalculation as [IMIS Miscalculation],
+FORMAT (Miscalculation_Cleared , 'MM/dd/yyyy') as [IMIS Miscalculation Cleared],
+NAD_Property as [IMIS NAD Property],
+FilingNoticeNumber as [IMIS Filing Notice Number],
+BalanceNoticeNumber as [IMIS Balance Notice Number],
+AuditNoticeNumber as [IMIS Audit Notice Number],
+MissedProjectionReason as [IMIS Missed Projection Reason],
+Below1Mil as [IMIS Below1Mil],
+Below1mil_Cleared as [IMIS Below1mil_Cleared] ,
+Writeoff_Amount as  [IMIS Writeoff Amount],
+concat([SEQN],'-',assess_audit.[ID]) as [External Id]
+from IMIS.dbo.Assess_Audit assess_audit LEFT JOIN IMIS.dbo.Name IMIS_name on assess_audit.ID =  IMIS_name.ID 
+where IMIS_name.STATUS != 'D');
+GO
