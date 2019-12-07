@@ -24,10 +24,45 @@ COALESCE(IMIS_Service.dbo.fn_TransParentID(base.Account, [Assess Year]), base.[A
 [Filed By User],
 [Filed Online],
 [Filed Date],
-[Fiscal End Date],
-FORMAT(CONVERT(INT,[Fiscal End Month]), '00') [Fiscal End Month],
-[Fiscal Start Date],
-[Fiscal Start Month],
+ [Interest Start Date],
+
+--If Under_1M_End date is empty then create date with below logic day =1,Month=fiscal end month,Year=fiscal_year
+--else Uner_1M_End date. Make sure format of date will be MM/DD/YYYY
+case
+    -- -- if FISCAL MONTH is not given make Fiscal End date with these  values 
+    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2016' 
+    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
+    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2017' 
+    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2017' 
+     when COALESCE(
+    Under1M_EndDate,
+  TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
+       else NULL end as [Fiscal End Date],
+
+-- case when base.Fiscal_Month != '' then RIGHT('0'+base.Fiscal_Month,2) else null  end as [Fiscal End Month],
+FORMAT(CONVERT(INT,[FISCAL_MONTH]), '00') [Fiscal End Month],
+
+
+--If Under_1M_Begin date is empty then create date with below logic day =1,Month=fiscal start month,Year=fiscal_year
+-- else Uner_1M_Begin date. Make sure format of date will be MM/DD/YYYY "
+case
+    --  if FISCAL MONTH is not gicen make Fiscal Start datw with these  values 
+    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '01/01/2016' 
+    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2015' 
+    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jan%' then  '01/01/2017' 
+    when (Under1M_BeginDate is Null or Under1M_BeginDate = '') and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2016'  
+    --else make it using Fical Month
+    when COALESCE(
+    Under1M_BeginDate,
+  TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',base.FISCAL_YEAR))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',base.FISCAL_YEAR))),'MM/dd/yyyy') 
+    
+    else NULL  end  as [Fiscal Start Date],
+
+
+  --This means if 12 is start month then 12-1 will be nov
+  case when base.FISCAL_MONTH > 0 and  base.FISCAL_MONTH < 12  then  FORMAT(CONVERT(INT,base.Fiscal_Month +1), '00') 
+       when base.FISCAL_MONTH = 12 then '01' 
+  else null end as [Fiscal Start Month],
 [Gross Reciept],
 [IMIS Assessment Calculation],
 [IMIS Interest],
@@ -98,6 +133,9 @@ assess_audit_vw.[IMIS Writeoff Amount],
 concat(base.[External Id],'-',base.[Account]) as [External Id]
  from
  (select
+ Under1M_BeginDate as Under1M_BeginDate,
+ Under1M_EndDate as Under1M_EndDate,
+ FISCAL_YEAR as FISCAL_YEAR,
  IMIS_name.STATUS as [Status Flag],
  -- Use external id to populate this field
   assess.ID as 'Account',
@@ -134,38 +172,17 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
   email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Filed By User],
-  Format(assess_notice.N_FILEDATE,'MM/dd/yyyy') as [Filed Date],
+  Format(assess.DATE_RECEIVED,'MM/dd/yyyy') as [Filed Date],
+  Format(assess_notice.N_DueDate,'MM/dd/yyyy') as [Interest Start Date],
   assess.Filed_online as 'Filed Online',
-  --This means if 12 is start month then 12-1 will be nov
-  case when assess.FISCAL_MONTH > 0 and  assess.FISCAL_MONTH < 12  then  FORMAT(CONVERT(INT,assess.Fiscal_Month +1), '00')  when assess.FISCAL_MONTH = 12 then '01' else null end as [Fiscal Start Month],
-  --If Under_1M_End date is empty then create date with below logic day =1,Month=fiscal end month,Year=fiscal_year
-  --else Uner_1M_End date. Make sure format of date will be MM/DD/YYYY
-
-	  case
-    -- -- if FISCAL MONTH is not given make Fiscal End date with these  values 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2016/17' and   LOWER(assess.BILL_CYCLE) like 'jan%' then  '12/31/2016' 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2016/17' and   LOWER(assess.BILL_CYCLE) like 'jul%' then  '06/30/2016' 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2017/18' and   LOWER(assess.BILL_CYCLE) like 'jan%' then  '12/31/2017' 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2017/18' and   LOWER(assess.BILL_CYCLE) like 'jul%' then  '06/30/2017' 
-     when COALESCE(
-    assess.Under1M_EndDate,
-  TRY_CONVERT(date,CONCAT(assess.FISCAL_YEAR,'/',assess.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT(assess.FISCAL_YEAR,'/',assess.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
-       else NULL end as [Fiscal End Date],
-  --If Under_1M_Begin date is empty then create date with below logic day =1,Month=fiscal start month,Year=fiscal_year
- -- else Uner_1M_Begin date. Make sure format of date will be MM/DD/YYYY "
-	  case
-    --  if FISCAL MONTH is not gicen make Fiscal Start datw with these  values 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2016/17' and   LOWER(assess.BILL_CYCLE) like 'jan%' then  '01/01/2016' 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2016/17' and   LOWER(assess.BILL_CYCLE) like 'jul%' then  '07/01/2015' 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2017/18' and   LOWER(assess.BILL_CYCLE) like 'jan%' then  '01/01/2017' 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '') and assess.FISCAL_MONTH = '' and assess.READY_TO_POST = 0  and assess.Assess_Year = '2017/18' and   LOWER(assess.BILL_CYCLE) like 'jul%' then  '07/01/2016'  
-    --else make it using Fical Month
-    when COALESCE(
-    assess.Under1M_BeginDate,
-  TRY_CONVERT(date,CONCAT(assess.FISCAL_MONTH,'/','1','/',assess.FISCAL_YEAR))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(assess.FISCAL_MONTH,'/','1','/',assess.FISCAL_YEAR))),'MM/dd/yyyy') 
-    
-    else NULL  end  as [Fiscal Start Date],
-  case when assess.Fiscal_Month != '' then RIGHT('0'+assess.Fiscal_Month,2) else null  end as 'Fiscal End Month',
+  case when assess.Fiscal_Month != '' then RIGHT('0'+assess.Fiscal_Month,2)  
+  when assess.FISCAL_MONTH = '' and assess.ASSESS_YEAR >= '2017/18' and assess.READY_TO_POST = 0   then 
+      FIRST_VALUE( assess.FISCAL_MONTH ) OVER ( 
+        PARTITION BY assess.Id
+        ORDER BY assess.ASSESS_YEAR DESC
+	      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) 
+     
+    else null  end as [Fiscal_Month],
   assess.GROSS_RECEIPTS as 'Gross Reciept',
   --All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
   case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
