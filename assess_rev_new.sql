@@ -162,12 +162,8 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Completed By Contact],
   FORMAT (assess.DATE_RECEIVED , 'MM/dd/yyyy') as [Completed Date],
   assess.ASSESSMENT_LOC as [Customer Calculation],
-  -- All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
-  -- three more values are added in this 'Exempt - Business Size (Revenue) 5 years','Exempt - Business Size (Revenue) 3 years','Exempt – Non Noticed',
-  case 
-      when assess.Exempt_Code  in  ('','Exempt - Business Size (Revenue) 5 years','Exempt - Business Size (Revenue) 3 years','Exempt – Non Noticed','NOTOUR','UNDER1') then assess.Exempt_Code  
-      when assess.Exempt_Code = '' then '' 
-  else  'Exempt – Other'  end as [Exempt Status],
+  -- make all as Exempt Status
+    'Exempt – Other'  end as [Exempt Status],
 
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
