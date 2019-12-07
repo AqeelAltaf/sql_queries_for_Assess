@@ -68,8 +68,8 @@ case when Month(assess_car.PERIOD) != '' then FORMAT(Month(assess_car.PERIOD),'0
 'Passenger Car Rental'  as [Segment Category],
 assess_car.QUANTITY as [Primary Gross Revenue],
 assess_car.SIGNATURE as [Signature] ,
+assess_car.IsPaid as [IMIS IsPaid],
 assess_car.seqn as [External Id]
-
 from  IMIS.dbo.Assess_car assess_car 
 LEFT JOIN BOOMI_DEV.dbo.Email__c email ON assess_car.Contact_Email = email.NAME
 lEFT JOIN (select acc1.*, acc2.IMIS_ID__C as [IMIS_ID]  from BOOMI_DEV.dbo.PRODAccounts acc1 left join BOOMI_DEV.dbo.PRODAccounts  acc2 on acc1.BILL_TO_PARENT__C = acc2.ID) acc ON assess_car.ID = acc.TOURISM_ID__C

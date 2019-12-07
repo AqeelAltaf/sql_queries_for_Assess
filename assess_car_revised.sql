@@ -59,6 +59,7 @@ assess_car_vw.[Account],
 [IMIS Missed Projection Reason],
 [IMIS Below1Mil],
 [IMIS Below1mil_Cleared] ,
+[IMIS IsPaid],
 assess_audit_vw.[IMIS Writeoff Amount],
 assess_car_vw.[External Id] as [External ID]
 from  BOOMI_DEV.dbo.VW_IMIS_Assess_Car assess_car_vw 
