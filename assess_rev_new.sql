@@ -32,8 +32,6 @@ case
     -- -- if FISCAL MONTH is not given make Fiscal End date with these  values 
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2016' 
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2017' 
-    when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2017' 
      when COALESCE(
     Under1M_EndDate,
   TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
@@ -49,8 +47,6 @@ case
     --  if FISCAL MONTH is not gicen make Fiscal Start datw with these  values 
     when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '01/01/2016' 
     when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2015' 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jan%' then  '01/01/2017' 
-    when (Under1M_BeginDate is Null or Under1M_BeginDate = '') and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2017/18' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2016'  
     --else make it using Fical Month
     when COALESCE(
     Under1M_BeginDate,

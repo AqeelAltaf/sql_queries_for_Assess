@@ -26,8 +26,8 @@ rates.RATE__C  as [Primary Assessment Rate],
 [Segment Code],
 [Segment Category],
 [Signature],
-concat([External Id],'-',[Account]) as [External Id]
-
+concat([External Id],'-',[Account]) as [External Id],
+[IMIS IsPaid]
  from 
      (
 select
