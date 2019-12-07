@@ -179,7 +179,8 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   when assess.FISCAL_MONTH = '' and assess.ASSESS_YEAR >= '2017/18' and assess.READY_TO_POST = 0   then 
       FIRST_VALUE( assess.FISCAL_MONTH ) OVER ( 
         PARTITION BY assess.Id
-        ORDER BY assess.ASSESS_YEAR DESC
+        ORDER BY assess.ASSESS_YEAR DESC,
+                case when assess.ASSESS_YEAR < '2016/17' or Superseded = 1 then '' ELSE FISCAL_MONTH end ASC
 	      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) 
      
     else null  end as [Fiscal_Month],
