@@ -163,7 +163,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   FORMAT (assess.DATE_RECEIVED , 'MM/dd/yyyy') as [Completed Date],
   assess.ASSESSMENT_LOC as [Customer Calculation],
   -- make all as Exempt Status
-    'Exempt – Other'  end as [Exempt Status],
+    'Exempt – Other'   as [Exempt Status],
 
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
