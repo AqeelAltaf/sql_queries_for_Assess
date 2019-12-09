@@ -34,11 +34,14 @@ case
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
      when COALESCE(
     Under1M_EndDate,
-  TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT(base.FISCAL_YEAR,'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
-       else NULL end as [Fiscal End Date],
+  TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('06','/','30','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))) ,'MM/dd/yyyy')
+ 
+       else '' end as [Fiscal End Date],
 
 -- case when base.Fiscal_Month != '' then RIGHT('0'+base.Fiscal_Month,2) else null  end as [Fiscal End Month],
-FORMAT(CONVERT(INT,[FISCAL_MONTH]), '00') [Fiscal End Month],
+case when FISCAL_MONTH != '' then FORMAT(CONVERT(INT,[FISCAL_MONTH]), '00')  else '' end   as [Fiscal End Month],
 
 
 --If Under_1M_Begin date is empty then create date with below logic day =1,Month=fiscal start month,Year=fiscal_year
@@ -50,15 +53,16 @@ case
     --else make it using Fical Month
     when COALESCE(
     Under1M_BeginDate,
-  TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',base.FISCAL_YEAR))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',base.FISCAL_YEAR))),'MM/dd/yyyy') 
-    
-    else NULL  end  as [Fiscal Start Date],
+  TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('07','/','01','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))-1)) ,'MM/dd/yyyy')
+    else ''  end  as [Fiscal Start Date],
 
 
   --This means if 12 is start month then 12-1 will be nov
   case when base.FISCAL_MONTH > 0 and  base.FISCAL_MONTH < 12  then  FORMAT(CONVERT(INT,base.Fiscal_Month +1), '00') 
        when base.FISCAL_MONTH = 12 then '01' 
-  else null end as [Fiscal Start Month],
+  else '' end as [Fiscal Start Month],
 [Gross Reciept],
 [IMIS Assessment Calculation],
 [IMIS Interest],
@@ -175,7 +179,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
                 case when assess.ASSESS_YEAR < '2016/17' or Superseded = 1 then '' ELSE FISCAL_MONTH end ASC
 	      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) 
      
-    else null  end as [Fiscal_Month],
+    else ''  end as [Fiscal_Month],
   assess.GROSS_RECEIPTS as 'Gross Reciept',
   --All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
   case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
@@ -228,5 +232,3 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
     )  
 
 GO
-
-
