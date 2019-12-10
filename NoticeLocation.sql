@@ -1,7 +1,7 @@
 ALTER VIEW [dbo].[VW_IMIS_Notice_Location]
 AS 
-select 
- [Letter Date],
+select
+dbo.getLetterDate([Assess Year] ,  [Notice Type]  , main.[Billing Entity] ) as [Letter Date],
  [Notice Type], 
  [Current SEQN],
  [Account],
@@ -11,7 +11,7 @@ select
 (
   select
 base.Test as [Letter Date],
-base.NoticeType as [Notice Type], 
+case when base.[NoticeType] = 'N7' then 'N6' else base.[NoticeType] end as [Notice Type],
 base.SEQN   as [Current SEQN],
 base.Id as [Account],
 IMIS_Service.dbo.fn_TransParentID(base.Id, base.ASSESS_YEAR)  as [Billing Entity],

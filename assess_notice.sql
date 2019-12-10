@@ -1,14 +1,47 @@
-ALTER VIEW dbo.VW_IMIS_Assess_Notice_Int
+ALTER VIEW dbo.VW_IMIS_Assess_Notice
 AS
 select 
---SUBSTRING( concat(main.[External Id],'-',main.[Notice Type],'-',NewID()), 0, 19 ) as [External Id],
+[External Id],
+-- as there is no need of Account/Id but Billing Entity will be used as Account in Notice
+[Billing Entity] as [Account] ,
+[Assess Year],
+ [Is Bill To],
+[Deadline],
+[Letter Date],
+ [Notice Type],
+[Letter Status],
+[Notice Drop Date],
+[7% Decrease in Revenue],
+[7 Point Decrease in TNT],
+[Clear 7% Decrease in Revenue],
+[Clear 7 Point Decrease in TNT],
+[Clear Low TNT Reported],
+[Clear Repeated Revenue],
+[Clear Rounded Revenue],
+[Clear Secondary TNT],
+[Clear Zero TNT],
+[Low TNT Reported],
+[Repeated Revenue],
+[Rounded Revenue],
+[Secondary TNT],
+[Zero TNT],
+[Segment],
+[Segment Code],
+[Segment Rate],
+[Segment Max] ,
+[Notice Timeline Date],
+[IMIS Notice File Date]
+ from 
+ (  
+   select 
+DENSE_RANK() OVER(PARTITION By [Assess Year], [Billing Entity], [Notice Type] ORDER BY Account) as RowNumber,
 main.[External Id],
 main.[Account] ,
 main.[Assess Year],
 -- when the record is itself's parent or have no parent then it's Bill To 
 case when  main.[Billing Entity]  in (main.Account,'')  then 1 else 0 end as [Is Bill To],
 main.[Deadline],
-main.[Letter Date],
+dbo.getLetterDate(main.[Assess Year] ,  [Notice Type]  , main.[Billing Entity] ) as [Letter Date],
 main.[Billing Entity],
 case when main.[Notice Type] = 'N7' then 'N6' else main.[Notice Type]  end as [Notice Type],
 main.[Letter Status],
@@ -95,7 +128,9 @@ acc.BILLING_CYCLE__C as [Bill Cycle],
 
 IMIS_name.STATUS as [Status Flag],
 -- calling function to get value of Account/ID of the record by the function(given by faiza) 
-IMIS_Service.dbo.fn_TransParentID(base.Id, base.ASSESS_YEAR)  as [Billing Entity], 
+--IMIS_Service.dbo.fn_TransParentID(base.Id, base.ASSESS_YEAR)  as [Billing Entity], 
+--as  now we've saved all the answers of function in a table so calling values from that
+b_ent.[Billing Entity] as [Billing Entity], 
 
 -- Use external id to populate this field
 base.Id as [Account],
@@ -113,7 +148,7 @@ base.Id as [Account],
  end as [Deadline],
  format(base.test ,'MM/dd/yyyy') as [Letter Date],
  'Sent' as [Letter Status],
- base.[NoticeType] as [Notice Type],
+ case when base.[NoticeType] = 'N7' then 'N6' else base.[NoticeType] end as [Notice Type],
   case 
  when base.NoticeType >= 'A1' and base.[NoticeType] <='A3' and base.A_dropDate is  not null then FORMAT(base.A_dropDate,'MM/dd/yyyy')
  when base.NoticeType >= 'N1' and base.[NoticeType] <='N7' and base.N_DROPDATE is  not null then FORMAT(base.N_DROPDATE,'MM/dd/yyyy')
@@ -131,6 +166,7 @@ unpivot
   Test
   for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
 ) as NoticeType  ) base
+LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = base.ID and b_ent.ASSESS_YEAR = base.ASSESS_YEAR 
 LEFT JOIN IMIS.dbo.Assess_Notice assess_notice1 on base.SEQN = assess_notice1.SEQN   
  LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
@@ -138,4 +174,5 @@ LEFT JOIN IMIS.dbo.Assess_Audit ass_aud on base.[NoticeType] in ('A1','A2','A3')
 LEFT JOIN BOOMI_DEV.dbo.SegmentRate rates on main.[Assess Year] = rates.[AssessYear] and main.[Segment] = rates.[SegmentCategory] 
 LEFT JOIN BOOMI_DEV.dbo.SegmentMax seg_max on main.[Assess Year] = seg_max.[PreviousFiscalYear] and main.[Segment Code] = seg_max.[SEGMENT_CODE__C] 
 LEFT JOIN BOOMI_DEV.dbo.BillingPeriod billing_period on main.[Notice Type] in ('N1','N2','N3','N4','N5','N6','N7','AQ1','AQ2','AQ3') and main.[Assess Year]  = billing_period.ASSESS_YEAR__C and main.[Bill Cycle] =  billing_period.BILL_CYCLE__C 
-where main.[Status Flag] != 'D' ;
+where main.[Status Flag] != 'D'
+)  vw_assess_not  where RowNumber = 1  ;
