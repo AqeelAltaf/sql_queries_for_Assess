@@ -80,3 +80,34 @@ LEFT JOIN IMIS.dbo.Name IMIS_name on assess_car.ID =  IMIS_name.ID )   base wher
 --counts in final view 
 select count(*) from dbo.VW_IMIS_rev_Assess_Car
 
+
+-- making Billing Entity Table
+select Id, ASSESS_YEAR, 
+
+IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity] INTO BOOMI_DEV.dbo.VW_Billing_Entity   from IMIS.dbo.Assess_Notice
+
+
+-- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
+ALTER FUNCTION dbo.getLetterDate(@AssessYear varchar(255), @NoticeType varchar(255), @BillingEntity varchar(255))  
+-- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
+RETURNS VARCHAR(255) AS
+BEGIN
+    RETURN 
+	(
+		--SELECT TOP 1 B1 FROM  IMIS.dbo.Assess_Notice WHERE B1 IS NOT NULL 
+		select Top 1  Convert(varchar(30),[Letter Date],102)  from 
+			(select Id, ASSESS_YEAR, NoticeType, FORMAT(Test  , 'MM/dd/yyyy') as [Letter Date]
+			FROM IMIS.dbo.Assess_Notice 
+			unpivot
+			(
+			  Test
+			  for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
+			) as NoticeType ) base  LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  
+			on b_ent.Id = base.ID and b_ent.ASSESS_YEAR = base.ASSESS_YEAR 
+			where base.ASSESS_YEAR = @AssessYear  and base.NoticeType = @NoticeType and b_ent.[Billing Entity] = @BillingEntity
+			Group By  [Letter Date]  ORDER BY COUNT( [Letter Date] ) DESC
+	)
+END
+GO
+
+select dbo.getLetterDate('2016/17','N1','1350011')
