@@ -88,14 +88,24 @@ IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity] INTO BOO
 
 
 -- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
+-- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
 ALTER FUNCTION dbo.getLetterDate(@AssessYear varchar(255), @NoticeType varchar(255), @BillingEntity varchar(255))  
+
 -- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
 RETURNS VARCHAR(255) AS
 BEGIN
     RETURN 
 	(
 		--SELECT TOP 1 B1 FROM  IMIS.dbo.Assess_Notice WHERE B1 IS NOT NULL 
-		select Top 1  Convert(varchar(30),[Letter Date],102)  from 
+		select Top 1 
+			case when @AssessYear =    '2015/16' and count([Count of Letter]) over( partition By [Count of Letter] ) > 1 then CONCAT('01/0',right(@NoticeType, 1),'/1900')
+			      when @AssessYear =   '2016/17' and count([Count of Letter]) over( partition By [Count of Letter] ) > 1 then CONCAT('01/0',right(@NoticeType, 1),'/1901')
+		 	     else  Convert(varchar(30),[Letter Date],102)  end
+		  from 
+		(select Top 2 
+		  [Letter Date] , 
+		  COUNT( [Letter Date] ) as [Count of Letter]
+		from 
 			(select Id, ASSESS_YEAR, NoticeType, FORMAT(Test  , 'MM/dd/yyyy') as [Letter Date]
 			FROM IMIS.dbo.Assess_Notice 
 			unpivot
@@ -105,9 +115,38 @@ BEGIN
 			) as NoticeType ) base  LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  
 			on b_ent.Id = base.ID and b_ent.ASSESS_YEAR = base.ASSESS_YEAR 
 			where base.ASSESS_YEAR = @AssessYear  and base.NoticeType = @NoticeType and b_ent.[Billing Entity] = @BillingEntity
-			Group By  [Letter Date]  ORDER BY COUNT( [Letter Date] ) DESC
+			Group By  [Letter Date]  ORDER BY COUNT( [Letter Date] ) DESC) main
 	)
 END
 GO
 
 select dbo.getLetterDate('2016/17','N1','1350011')
+select dbo.getLetterDate('2015/16','N2','1191516')
+select dbo.getLetterDate('2016/17','N2','1380356')
+
+
+-- query to get records which have more than one letter date 
+SELECT [Billing Entity], [Assess Year],[Notice Type],  [Letter Date] , COUNT(*) FROM (
+   select
+    base.Test as [Letter Date],
+	[Billing Entity],
+    case when base.[NoticeType] = 'N7' then 'N6' else base.[NoticeType] end as [Notice Type],
+    base.SEQN   as [Current SEQN],
+    base.Id as [Account],
+    base.ASSESS_YEAR as [Assess Year],
+    IMIS_name.STATUS as [Status Flag],
+	COUNT(*) OVER(partition BY    [Billing Entity], base.ASSESS_YEAR  ,base.[NoticeType]  ) as [group count] 
+
+ from 
+ ( 
+     select *,IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity]
+        FROM IMIS.dbo.Assess_Notice 
+        unpivot
+        (
+        Test
+        for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
+) as NoticeType  ) base
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.Id =  IMIS_name.ID  where IMIS_name.STATUS !='D' and  base.ASSESS_YEAR in ('2015/16', '2016/17') ) main WHERE  [group count] > 1
+ GROUP BY [Billing Entity], [Assess Year],[Notice Type],  [Letter Date]  
+ ORDER BY  [Billing Entity], [Assess Year],[Notice Type],  [Letter Date]  
+

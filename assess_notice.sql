@@ -6,7 +6,9 @@ select
 [Billing Entity] as [Account] ,
 [Assess Year],
  [Is Bill To],
-[Deadline],
+case when [Letter Date] in ('01/01/1900','01/02/1900','01/03/1900','01/04/1900','01/07/1900','01/05/1900','01/06/1900') then '02/15/1900'
+     when [Letter Date] in ('01/01/1901','01/02/1901','01/03/1901','01/04/1901','01/07/1901','01/05/1901','01/06/1901') then '02/15/1901'
+     else [Deadline] end as [Deadline],
 [Letter Date],
  [Notice Type],
 [Letter Status],
@@ -148,7 +150,7 @@ base.Id as [Account],
  end as [Deadline],
  format(base.test ,'MM/dd/yyyy') as [Letter Date],
  'Sent' as [Letter Status],
- case when base.[NoticeType] = 'N7' then 'N6' else base.[NoticeType] end as [Notice Type],
+ base.[NoticeType]  as [Notice Type],
   case 
  when base.NoticeType >= 'A1' and base.[NoticeType] <='A3' and base.A_dropDate is  not null then FORMAT(base.A_dropDate,'MM/dd/yyyy')
  when base.NoticeType >= 'N1' and base.[NoticeType] <='N7' and base.N_DROPDATE is  not null then FORMAT(base.N_DROPDATE,'MM/dd/yyyy')
