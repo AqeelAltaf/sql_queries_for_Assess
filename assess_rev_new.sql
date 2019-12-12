@@ -150,8 +150,8 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   SUBSTRING(assess.AUTHORIZED_REP,CHARINDEX(' ', assess.AUTHORIZED_REP) + 1,LEN(assess.AUTHORIZED_REP)) AS [Authorized Person Last Name],
   case when LOWER(assess.BILL_CYCLE) like 'jan%' then 'January'
        when LOWER(assess.BILL_CYCLE) like 'jul%' then 'July' 
-       when assess.Assess_Year >= '2016/17' (assess.BILL_CYCLE is Null or assess.BILL_CYCLE = '') and assess.READY_TO_POST = 0   then acc.BILLING_CYCLE__C end
-       else '' 
+       when assess.Assess_Year >= '2016/17' and assess.BILL_CYCLE = '' and assess.READY_TO_POST = 0   then acc.BILLING_CYCLE__C 
+       else ''  end
        as [Bill Cycle],
   --Bring all accounts data in sql table, then search Assess.ID in tourism id field of account if account record is found then get data from bill_to_parent parent field and popultae here, if Bill_to_parent field is empty then populate acount tourism id
   --case when BILL_TO_PARENT__C is not Null then acc.IMIS_ID else acc.TOURISM_ID__C end as [Billing Entity],
