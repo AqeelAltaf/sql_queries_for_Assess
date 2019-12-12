@@ -37,7 +37,6 @@ case
   TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
   when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))),'MM/dd/yyyy') 
   when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('06','/','30','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))) ,'MM/dd/yyyy')
- 
        else '' end as [Fiscal End Date],
 
 -- case when base.Fiscal_Month != '' then RIGHT('0'+base.Fiscal_Month,2) else null  end as [Fiscal End Month],
@@ -149,7 +148,11 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   SUBSTRING(assess.AUTHORIZED_REP,0,CHARINDEX(' ', assess.AUTHORIZED_REP)) AS [Authorized Person First Name],
   -- split AUTHORIZED_REP with space first name will come in this
   SUBSTRING(assess.AUTHORIZED_REP,CHARINDEX(' ', assess.AUTHORIZED_REP) + 1,LEN(assess.AUTHORIZED_REP)) AS [Authorized Person Last Name],
-  case when LOWER(assess.BILL_CYCLE) like 'jan%' then 'January' when  LOWER(assess.BILL_CYCLE) like 'jul%' then 'July' else BILL_CYCLE end as [Bill Cycle],
+  case when LOWER(assess.BILL_CYCLE) like 'jan%' then 'January'
+       when LOWER(assess.BILL_CYCLE) like 'jul%' then 'July' 
+       when assess.Assess_Year >= '2016/17' (assess.BILL_CYCLE is Null or assess.BILL_CYCLE = '') and assess.READY_TO_POST = 0   then acc.BILLING_CYCLE__C end
+       else '' 
+       as [Bill Cycle],
   --Bring all accounts data in sql table, then search Assess.ID in tourism id field of account if account record is found then get data from bill_to_parent parent field and popultae here, if Bill_to_parent field is empty then populate acount tourism id
   --case when BILL_TO_PARENT__C is not Null then acc.IMIS_ID else acc.TOURISM_ID__C end as [Billing Entity],
   --COALESCE(acc.BILL_TO_PARENT__C,(str(acc.TOURISM_ID__C))) as [Billing Entity],
@@ -162,9 +165,11 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Completed By Contact],
   FORMAT (assess.DATE_RECEIVED , 'MM/dd/yyyy') as [Completed Date],
   assess.ASSESSMENT_LOC as [Customer Calculation],
-  -- make all as Exempt Status
-    'Exempt – Other'   as [Exempt Status],
-
+-- new changes as of 12/12/2019
+  case  when assess.Exempt_Code in ('B200','CEASED','NOTSEG','PBBODY','SECXEA','SECXEE','VOL') then   'Exempt – Other'   
+        when assess.Exempt_Code in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') then   'Exempt – Business Size (Revenue) 1 year'
+        else '' end
+        as [Exempt Status],
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
   email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Filed By User],
@@ -231,4 +236,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
 	where base.[Assess Year] ! = '' and base.[Assess Year] ! = '2'  and base.[Status Flag] != 'D'
     )  
 
+
 GO
+
+
