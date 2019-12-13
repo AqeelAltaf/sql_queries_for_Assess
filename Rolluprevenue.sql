@@ -1,14 +1,12 @@
 CREATE VIEW dbo.VW_IMIS_Roll_up_Revenue as
-select [Tourism ID],
-case when [Roll_up_Revenue_Account__c] = [Tourism ID] then '' else  [Roll_up_Revenue_Account__c] end as [Roll_up_Revenue_Account__c]
-from 
-(
-    select ID as  [Tourism ID],
-    IMIS.dbo.fn_COID(ID) as [Roll_up_Revenue_Account__c]
- from IMIS.dbo.Loc_Info    
- ) base
+    select loc_info.ID as  ID,
+	name.CO_ID AS CO_ID
+ from IMIS.dbo.Loc_Info    loc_info
+ LEFT JOIN IMIS.dbo.Name name on loc_info.ID = name.ID and loc_info.REVENUE_ROLLUP = 1
 
 
+
+CREATE VIEW dbo.VW_IMIS_Account_Exempted as
  select  ID, 
  CATEGORY_TYPE__C, 
  BILL_TO_PARENT__C, 
