@@ -6,10 +6,10 @@ CREATE VIEW dbo.VW_IMIS_Roll_up_Revenue as
 
 
 
-CREATE VIEW dbo.VW_IMIS_Account_Exempted as
+Alter VIEW dbo.VW_IMIS_Account_Exempted as
  select  ID, 
  CATEGORY_TYPE__C, 
- BILL_TO_PARENT__C, 
+ TOURISM_ID__C, 
  BILLING_CYCLE__C, 
  IsExempted,
  case
@@ -23,7 +23,7 @@ CREATE VIEW dbo.VW_IMIS_Account_Exempted as
  (select 
  ID, 
  CATEGORY_TYPE__C, 
- BILL_TO_PARENT__C, 
+ TOURISM_ID__C, 
  BILLING_CYCLE__C,
 case 
 	when CATEGORY_TYPE__C = 'Exempt'  and  BILL_TO_PARENT__C is Null then 1 
