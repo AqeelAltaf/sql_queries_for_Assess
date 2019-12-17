@@ -1,4 +1,4 @@
-CREATE VIEW dbo.VW_IMIS_Roll_up_Revenue as
+ALTER VIEW dbo.VW_IMIS_Roll_up_Revenue as
     select loc_info.ID as  ID,
 	name.CO_ID AS CO_ID
  from IMIS.dbo.Loc_Info    loc_info
@@ -13,11 +13,11 @@ Alter VIEW dbo.VW_IMIS_Account_Exempted as
  BILLING_CYCLE__C, 
  IsExempted,
  case
-	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then 1 
-	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then 7 end as [Fiscal Start Month] ,
+	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then '01' 
+	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then '07' end as [Fiscal Start Month] ,
  case
-	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then 12 
-	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then 6 end as [Fiscal End Month] 
+	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then '12' 
+	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then '06' end as [Fiscal End Month] 
 
  from
  (select 

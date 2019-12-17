@@ -168,7 +168,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
 -- new changes as of 12/12/2019
   case  when assess.Exempt_Code in ('B200','CEASED','NOTSEG','PBBODY','SECXEA','SECXEE','VOL') then   'Exempt – Other'   
         when assess.Exempt_Code in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') then   'Exempt – Business Size (Revenue) 1 year'
-        else '' end
+        end
         as [Exempt Status],
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
