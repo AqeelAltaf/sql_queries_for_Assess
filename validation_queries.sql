@@ -50,7 +50,7 @@ select [Assess Year],
 	select assess.Assess_Year as [Assess Year],
 	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
 	COALESCE(imis_seg_map.category, acc.Segment_Category__C) as [Segment Category],
-	case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
+	case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
 	assess.IsPaid as [IsPaid],
 	IMIS_name.Status  as [Status] from IMIS.dbo.Assess assess
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
@@ -206,15 +206,25 @@ unpivot
 
 -- Audit Checked  = True closed else open
 -- things to ask: is me AuditReson sab ke null arhe hain
+select  AuditYear , [Audit Status] , count(*) as [Audit counts]
+from (select  [AuditYear],
+		 case when LowTNT = 1 and LowTNT_Cleared is NUll  then 'open'  
+		    when DecreaseRevenue = 1 and  DecreaseRevenue_Cleared is NUll  then 'open'
+			when DecreaseTNT = 1 and  DecreaseTNT_Cleared  is Null then 'open' 
+			when RepeatRevenue = 1 and RepeatRevenue_Cleared is Null then 'open' 
+			when NoTNT = 1  and  NoTNT_Cleared = 0  then 'open'
+			when NoSecondTNT = 1 and  NoSecondTNT_Cleared = 0  then 'open'
+			when RoundedRevenue = 1 and RoundedRevenue_Cleared  = 0 then 'open'
+			when LowTNT = 1 and LowTNT_Cleared is not NUll  then 'close'  
+		    when DecreaseRevenue = 1 and  DecreaseRevenue_Cleared is not NUll  then 'close'
+			when DecreaseTNT = 1 and  DecreaseTNT_Cleared  is not Null then 'close' 
+			when RepeatRevenue = 1 and RepeatRevenue_Cleared is not Null then 'close' 
+			when NoTNT = 1  and  NoTNT_Cleared = 1  then 'close'
+			when NoSecondTNT = 1 and  NoSecondTNT_Cleared = 1  then 'close'
+			when RoundedRevenue = 1 and RoundedRevenue_Cleared  = 1 then 'close'
+			end as [Audit Status]
 
-select [Audit Status] , [Audit Reason Note], [AuditYear], count(*) as [Audit Count] 
- (select 
-[AuditYear],
-case when AuditChecked = 0 then  'Open' 
-	when AuditChecked = 1 then 'Closed'  end as [Audit Status],
-	LowTNT_Note + BalanceDue_Note+ DecreaseRevenue_Note + DecreaseTNT_Note + RepeatRevenue_Note + RoundedRevenue_Note + NoTNT_Note + NoSecondTNT_note + Below1mil_note as [Audit Reason Note] 
-	from IMIS.dbo.Assess_Audit) base group by [Audit Status] , [Audit Reason Note] , [AuditYear]
-
+from IMIS.dbo.Assess_Audit) base where [Audit Status] in ('open','close') Group by [AuditYear], [Audit Status] order by [AuditYear]
 
         --=================================--
 -- What: Active and exempt locations
@@ -234,16 +244,17 @@ case when AuditChecked = 0 then  'Open'
 
 
 -- query for Count of 'Exempt' , 'Active Standalone LOCs' and Bils
-   select Type, count(Type) from 
-(
-select Category, Status, 
-case when Status = 'A' and Category in ('LOC', 'RL') then 'Active Standalone LOCs'
-	 when Status = 'A' and Category in ('BIL', 'RB') then 'BILs' 
+
+select Type, count(*) from 
+(select  Category, Status, 
+case when Status = 'A' and Category in ('LOC', 'RL')  and VCusField.[IMIS Account Number]  = VCusField.[Bill To Parent]  then 'Active Standalone LOCs' 
+	 when Status = 'A' and Category in ('BIL', 'RB') and VCusField.[IMIS Account Number]  = VCusField.[Bill To Parent] then 'BILs' 
 	 when Status in ('E','IP','IF','I','NA') and Category in ('LOC', 'RL')  and Has_Filed_Ever = 1  then 'Exempt'
 	 else '' 
 end as [Type] 
-   from  [BOOMI].[dbo].[vIMIS_Name]) base   where base.Type in ('Active Standalone LOCs','BILs' , 'Exempt') group by Type
-
+   from  [BOOMI].[dbo].[vIMIS_Name] base 
+   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number] ) main
+   where main.Type in ('Active Standalone LOCs','BILs' , 'Exempt') group by Type
 
 -- for count of Active location 
 select Type,
@@ -265,13 +276,18 @@ end as [Type]
 -- How: by region
 -- Results: Counts must be the same in both systems
 
-   select dist.LiaisonDistrict , count(ID) as [Number of Location] from IMIS.dbo.Name_Address name_addr  
-   LEFT JOIN 
-  ( select * from (
-select *,  ROW_NUMBER() OVER(PARTITION BY LiaisonDistrict , ZipCode, ZIP Order By ZipCode ) as [RN] from IMIS.dbo.vLiaisonDistrict   ) l_dsit where RN = 1 ) dist on name_addr.ZIP =   dist.ZIP  where name_addr.ZIP !=  '' GROUP BY  dist.LiaisonDistrict 
+--    select dist.LiaisonDistrict , count(ID) as [Number of Location] from IMIS.dbo.Name_Address name_addr  
+--    LEFT JOIN 
+--   ( select * from (
+-- select *,  ROW_NUMBER() OVER(PARTITION BY LiaisonDistrict , ZipCode, ZIP Order By ZipCode ) as [RN] from IMIS.dbo.vLiaisonDistrict   ) l_dsit where RN = 1 ) dist on name_addr.ZIP =   dist.ZIP  where name_addr.ZIP !=  '' GROUP BY  dist.LiaisonDistrict 
 
-
-
+select 
+Region , count(*)
+  from 
+(select PURPOSE,ID, case when SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) != '' then SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) else ZIP end  as [ZIP_],ZIP from IMIS.dbo.Name_Address ) name_addr
+LEFT JOIN IMIS.dbo.Name IMIS_name on name_addr.ID =  IMIS_name.ID 
+LEFT JOIN BOOMI_DEV.dbo.vIMIS_District VW_dist on VW_dist.ZIPCode = name_addr.ZIP_ where name_addr.ZIP !=  '' and name_addr.PURPOSE = 'Location' and   IMIS_name.STATUS != 'D' 
+group by VW_dist.Region
         --=================================--
 -- What: Previous year's revenue
 -- Values : $$amounts
@@ -296,3 +312,9 @@ select [Assess Year],
 	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  )
 base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] != '2018/19' ) main GROUP BY [Assess Year], [Segment Category]
+
+
+
+   --Join with vIMIS_CalculatedFields view on the basis of ID and apply check Bill to Parent = ''
+   select * from BOOMI_DEV.dbo.vIMIS_CalculatedFields GRoup by [IMIS Account Number] having count(*) > 1
+      select count(*) from BOOMI_DEV.dbo.vIMIS_CalculatedFields where [Bill To Parent] = ''
