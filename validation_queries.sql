@@ -274,13 +274,7 @@ end as [Type]
 -- What: All LOCs by region
 -- Values: Counts
 -- How: by region
--- Results: Counts must be the same in both systems
-
---    select dist.LiaisonDistrict , count(ID) as [Number of Location] from IMIS.dbo.Name_Address name_addr  
---    LEFT JOIN 
---   ( select * from (
--- select *,  ROW_NUMBER() OVER(PARTITION BY LiaisonDistrict , ZipCode, ZIP Order By ZipCode ) as [RN] from IMIS.dbo.vLiaisonDistrict   ) l_dsit where RN = 1 ) dist on name_addr.ZIP =   dist.ZIP  where name_addr.ZIP !=  '' GROUP BY  dist.LiaisonDistrict 
-
+-- Results: Counts must be the same in both system
 select 
 Region , count(*)
   from 
