@@ -13,11 +13,9 @@ Alter VIEW dbo.VW_IMIS_Account_Exempted as
  BILLING_CYCLE__C, 
  IsExempted,
  case
-	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then '01' 
-	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then '07' end as [Fiscal Start Month] ,
+	when IsExempted = 1   then '01' end  as [Fiscal Start Month] ,
  case
-	when IsExempted = 1  and BILLING_CYCLE__C = 'January' then '12' 
-	when IsExempted = 1  and BILLING_CYCLE__C = 'July' then '06' end as [Fiscal End Month] 
+	when IsExempted = 1   then '12'  end as [Fiscal End Month] 
 
  from
  (select 
