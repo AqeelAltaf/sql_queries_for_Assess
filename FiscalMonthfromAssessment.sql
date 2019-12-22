@@ -6,7 +6,7 @@ select
  [Fiscal End Month],
  [Fiscal Start Month],
   IMIS_Service.dbo.fn_TransParentID(base.ID, base.[Assess Year]) as [Billing Entity]
- INTO    BOOMI_DEV.dbo.BilEnt_Assessments
+ INTO     BOOMI_DEV.dbo.BilEnt_Assessments
 
 
 from 
@@ -19,23 +19,7 @@ from
 			      when assess.FISCAL_MONTH = 12 then '01' 
                        else '' end as [Fiscal Start Month]
 		   from IMIS.dbo.Assess assess where Assess_Year in ('2017/18' , '2018/19','2019/20') 
-	UNION ALL
-	
-	 select * from 
-	(
-	SELECT    ID,
-	'Assess Car' as [Source Name],
-
-	case when MONTH(assess_car.PERIOD) > 0 and  MONTH(assess_car.PERIOD) <7 and YEAR(assess_car.PERIOD) - 1 < 2009 then TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD)-1,'/','0',YEAR(assess_car.PERIOD)%100))
-		 when MONTH(assess_car.PERIOD) > 0 and  MONTH(assess_car.PERIOD) <7 and YEAR(assess_car.PERIOD) - 1  >2008 then TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD)-1,'/',YEAR(assess_car.PERIOD)%100))
-		 when MONTH(assess_car.PERIOD) > 6 and  MONTH(assess_car.PERIOD) <13 and YEAR(assess_car.PERIOD) > 2008 then  TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD),'/',(YEAR(assess_car.PERIOD)+1)%100))
-		 when MONTH(assess_car.PERIOD) > 6 and  MONTH(assess_car.PERIOD) <13 and YEAR(assess_car.PERIOD) < 2009 then  TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD),'/','0',(YEAR(assess_car.PERIOD)+1)%100)) 
-		 else  Null  end  as [Assess Year] ,
-	case when Month(assess_car.PERIOD) != '' then FORMAT(Month(assess_car.PERIOD),'00') else null  end as [Fiscal End Month],
-	case when Month(assess_car.PERIOD) != '' then FORMAT(Month(assess_car.PERIOD),'00') else null  end as [Fiscal Start Month]
-	from IMIS.dbo.Assess_Car assess_car) _ where _.[Assess Year] in  ('2017/18' , '2018/19','2019/20')
-	) base 
-	
+	) base 	
 
     ----------------------------------
     -- query to get all tie records --
