@@ -162,7 +162,7 @@ select [Assess Year],
  
 	select assess.Assess_Year as [Assess Year],
 	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
-	case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
+	case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
 	Format(assess_notice.N_FILEDATE,'MM/dd/yyyy') as [Filed Date],
 	assess.IsPaid as [IsPaid],
 	IMIS_name.Status  as [Status] from IMIS.dbo.Assess assess
@@ -257,16 +257,20 @@ end as [Type]
    where main.Type in ('Active Standalone LOCs','BILs' , 'Exempt') group by Type
 
 -- for count of Active location 
-select Type,
+-- for count of Active location 
+select 
+Type,
  count(Type) from 
-
 (
-select Category, Status, 
-case when Status != 'R' and Category not in ('BIL', 'LOC','RL') then 'Active Location' 
-	 when Status not in ('CH7','CH11') and Category not in ('BIL', 'RB','LOC')   then 'Active Location'
+
+select Category, Status,base.[IMIS Account Number], 
+case 
+	when Status = 'A' and Category  in ('RL','LOC') and VCusField.[IMIS Account Number] != VCusField.[Bill To Parent]   then 'Bil Active Location'
 	 else '' 
 end as [Type] 
-   from  [BOOMI].[dbo].[vIMIS_Name]) base   where base.Type in ('Active Location') group by Type
+   from  [BOOMI].[dbo].[vIMIS_Name] base 
+   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number]  ) _
+     where Type in ('Bil Active Location') group by Type
 
 
 
@@ -276,12 +280,21 @@ end as [Type]
 -- How: by region
 -- Results: Counts must be the same in both system
 select 
-Region , count(*)
+Region ,
+count(*)
   from 
-(select PURPOSE,ID, case when SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) != '' then SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) else ZIP end  as [ZIP_],ZIP from IMIS.dbo.Name_Address ) name_addr
+(select PURPOSE,
+        ID,
+		case when SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) != '' then SUBSTRING(ZIP,0,CHARINDEX('-', ZIP)) else ZIP end  as [ZIP_],
+		ZIP from IMIS.dbo.Name_Address where ZIP != ''
+		) name_addr
 LEFT JOIN IMIS.dbo.Name IMIS_name on name_addr.ID =  IMIS_name.ID 
-LEFT JOIN BOOMI_DEV.dbo.vIMIS_District VW_dist on VW_dist.ZIPCode = name_addr.ZIP_ where name_addr.ZIP !=  '' and name_addr.PURPOSE = 'Location' and   IMIS_name.STATUS != 'D' 
+LEFT JOIN BOOMI_DEV.dbo.vIMIS_District VW_dist on VW_dist.ZIPCode = name_addr.ZIP_ 
+where name_addr.ZIP !=  '' and name_addr.PURPOSE = 'Location' 
+      and   IMIS_name.STATUS != 'D' 
+      and MEMBER_TYPE != 'IND'
 group by VW_dist.Region
+
         --=================================--
 -- What: Previous year's revenue
 -- Values : $$amounts
