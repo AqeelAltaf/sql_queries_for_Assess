@@ -25,6 +25,6 @@ Alter VIEW dbo.VW_IMIS_Account_Exempted as
  BILLING_CYCLE__C,
 case 
 	when CATEGORY_TYPE__C = 'Exempt'  and  BILL_TO_PARENT__C is Null then 1 
-	when CATEGORY_TYPE__C = 'Parent' and (select count(*) from PRODAccounts where BILL_TO_PARENT__C = base.ID ) = (select count(*) from PRODAccounts where BILL_TO_PARENT__C = base.ID and CATEGORY_TYPE__C = 'Exempt' ) then  1 
+	when CATEGORY_TYPE__C = 'Parent' and  (select count(*) from PRODAccounts where BILL_TO_PARENT__C = base.ID and CATEGORY_TYPE__C  ='Assessed') = 0 then  1  
 	else  0 end as IsExempted
 from PRODAccounts base ) acc
