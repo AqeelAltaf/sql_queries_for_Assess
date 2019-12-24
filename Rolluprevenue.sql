@@ -27,4 +27,4 @@ case
 	when CATEGORY_TYPE__C = 'Exempt'  and  BILL_TO_PARENT__C is Null then 1 
 	when CATEGORY_TYPE__C = 'Parent' and  (select count(*) from PRODAccounts where BILL_TO_PARENT__C = base.ID and CATEGORY_TYPE__C  ='Assessed') = 0 then  1  
 	else  0 end as IsExempted
-from PRODAccounts base ) acc
+from PRODAccounts base ) acc where IsExempted = 1
