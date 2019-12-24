@@ -6,16 +6,16 @@ select
  [Fiscal End Month],
  [Fiscal Start Month],
  IMIS_Service.dbo.fn_TransParentID(base.ID, base.[Assess Year]) as [Billing Entity],
+ Superseded,
  [Bill Cycle],
  case when [Bill Cycle] =  'January' then  '2018/19' else '2019/20' end as [Target Assess Year] 
- INTO   BOOMI_DEV.dbo.BilEnt_Assessments
-
-
+ INTO  BOOMI_DEV.dbo.BilEnt_Assessments
 from 
 	( 
 	select acc.BILLING_CYCLE__C as [Bill Cycle], 
 	         assess.ID,
 			'Assess' as [Source Name],
+			Superseded,
            case when assess.FISCAL_MONTH != '' then FORMAT(CONVERT(INT,assess.[FISCAL_MONTH]), '00')  else '' end   as [Fiscal End Month],
 	       assess.Assess_Year as [Assess Year] ,
 		     case when assess.FISCAL_MONTH > 0 and  assess.FISCAL_MONTH < 12  then  FORMAT(CONVERT(INT,assess.Fiscal_Month +1), '00') 
@@ -24,7 +24,7 @@ from
 		   from IMIS.dbo.Assess assess 
 		   LEFT JOIN  BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C 
 		   where assess.Assess_Year in ( '2018/19','2019/20') 
-	) base 	
+	) base 
     ----------------------------------
     -- query to get all tie records --
     ----------------------------------
@@ -37,8 +37,7 @@ bil_ent.[Source Name],
 bil_ent.[Fiscal Start Month],
 bil_ent.[Fiscal End Month],
 bil_ent.[Bill Cycle]
-
- from 
+from 
 (select * from 
 (
 select 
@@ -52,7 +51,7 @@ from
   ) main
  LEFT JOIN BOOMI_DEV.dbo.BilEnt_Assessments bil_ent on bil_ent.[Billing Entity] = main.[Billing Entity]  and main.[Target Assess Year] = bil_ent.[Assess Year]
 
- ORDER BY Parent 
+ ORDER BY Parent
 
 
 ------------------------------------------------------------------
@@ -69,16 +68,42 @@ IF @bill_cycle = 'January'
 ELSE 
        SET @assess_year = '2019/20';
 
-DECLARE @table_len float(24);
---print(@assess_year)
-SET @table_len = (select  count(*) from  BOOMI_DEV.dbo.BilEnt_Assessments where [Billing Entity] =@Parent  and [Assess Year] = @assess_year and [Fiscal End Month]!= '') ;
 RETURN (
-select top 1 
- case when count([Fiscal End Month]) > (@table_len/ 2) then [Fiscal End Month] else 'tie'   end
- --count([Fiscal End Month]) as [FM count]
- from BOOMI_DEV.dbo.BilEnt_Assessments  where [Billing Entity] = @Parent and [Assess Year] = @assess_year and [Fiscal End Month]!= ''
- Group By [Fiscal End Month]  ORder By count([Fiscal End Month])DESC)
+select top 1
+ case when count([FM count]) over(partition by [FM count] ) > 1 then 'tie' else [Fiscal End Month] end  from 
+ (select top 2 
+ [Fiscal End Month] , 
+ count([Fiscal End Month]) as [FM count]
+ from BOOMI_DEV.dbo.BilEnt_Assessments  where [Billing Entity] = @Parent and [Assess Year] = @assess_year and [Fiscal End Month]!= '' and Superseded = 0
+ Group By [Fiscal End Month] )_ ORder By [FM count] DESC)
  End
  go
 
- 
+
+    --------------------------------------
+    -- query to get all non tie records --
+    --------------------------------------
+Alter VIEW dbo.VW_IMIS_ParFiscalMonth as
+select 
+main.[Billing Entity] as Parent,
+main.[Fiscal Month],
+bil_ent.ID as Location,
+bil_ent.[Assess Year],
+bil_ent.[Source Name],
+bil_ent.[Fiscal Start Month],
+bil_ent.[Fiscal End Month],
+bil_ent.[Bill Cycle]
+from 
+(select * from 
+(
+select 
+[Billing Entity],
+dbo.getMaxFiscalMonthfromAssessment([Billing Entity],[Bill Cycle]) as [Fiscal Month],
+[Target Assess Year]
+from
+ (select distinct [Billing Entity],[Bill Cycle],[Target Assess Year]
+ from  BOOMI_DEV.dbo.BilEnt_Assessments where ID != [Billing Entity]) base )_ 
+  where _.[Fiscal Month] != 'tie'
+  ) main
+ LEFT JOIN BOOMI_DEV.dbo.BilEnt_Assessments bil_ent on bil_ent.[Billing Entity] = main.[Billing Entity]  and main.[Target Assess Year] = bil_ent.[Assess Year]
+
