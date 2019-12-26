@@ -150,3 +150,14 @@ SELECT [Billing Entity], [Assess Year],[Notice Type],  [Letter Date] , COUNT(*) 
  GROUP BY [Billing Entity], [Assess Year],[Notice Type],  [Letter Date]  
  ORDER BY  [Billing Entity], [Assess Year],[Notice Type],  [Letter Date]  
 
+
+-- Provide the list of accounts where Bill To and Child has different bill cycles.
+select TOURISM_ID__C,BILLING_CYCLE__C   from  
+   (select
+       CATEGORY_TYPE__C 
+	 , BILLING_CYCLE__C
+     , ID 
+	 , TOURISM_ID__C
+     , (select count(distinct BILLING_CYCLE__C ) from BOOMI_DEV.dbo.PRODAccounts where BILL_TO_PARENT__C = base.ID) as [child bcycle count] 
+from (select * from BOOMI_DEV.dbo.PRODAccounts where CATEGORY_TYPE__C = 'Parent') base ) _ 
+where [child bcycle count]  > 1
