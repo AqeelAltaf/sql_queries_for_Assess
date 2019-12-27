@@ -16,6 +16,7 @@ base.[Account],
 [Bill Cycle],
 COALESCE(IMIS_Service.dbo.fn_TransParentID(base.Account, [Assess Year]), base.[Account]) as [Billing Entity],
 [Completed],
+[Complete],
 [Completed By Contact],
 [Completed Date],
 [Customer Calculation],
@@ -158,6 +159,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   --COALESCE(acc.BILL_TO_PARENT__C,(str(acc.TOURISM_ID__C))) as [Billing Entity],
   
   assess.[READY_TO_POST] as [Completed],
+  assess.[COMPLETE] as [Complete],
   -- this is old logic 
   -- If completed date is not blank mark this true
   -- case when assess.DATE_RECEIVED is not null then 'True' else 'False'  end as [Completed] ,
@@ -168,7 +170,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
 -- new changes as of 12/12/2019
   case  when assess.Exempt_Code in ('B200','CEASED','NOTSEG','PBBODY','SECXEA','SECXEE','VOL') then   'Exempt – Other'   
         when assess.Exempt_Code in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') then   'Exempt – Business Size (Revenue) 1 year'
-        end
+        else '' end
         as [Exempt Status],
   assess.Exempt_Note as [Exempt Notes],
   --Bring all contacts and email object data in sql tables then search contact email in email table if email found then get the contact record of this email and populate in this field
@@ -187,7 +189,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
     else ''  end as [Fiscal_Month],
   assess.GROSS_RECEIPTS as 'Gross Reciept',
   --All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
-  case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
+  case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
   assess.Interest as 'IMIS Interest',
   assess.isPaid as 'IMIS IsPaid',
   assess.NUM_OF_MONTHS as [IMIS Num of Months],
