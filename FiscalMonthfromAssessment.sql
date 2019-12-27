@@ -86,12 +86,13 @@ select top 1
 Alter VIEW dbo.VW_IMIS_ParFiscalMonth as
 select 
 main.[Billing Entity] as Parent,
-main.[Fiscal Month],
+main.[Fiscal Month] as [Fiscal End Month],
+case when main.[Fiscal Month] > 0 and  main.[Fiscal Month] < 12  then  FORMAT(CONVERT(INT,main.[Fiscal Month] +1), '00') 
+			      when main.[Fiscal Month] = 12 then '01' 
+                       else '' end as [Fiscal Start Month],
 bil_ent.ID as Location,
 bil_ent.[Assess Year],
 bil_ent.[Source Name],
-bil_ent.[Fiscal Start Month],
-bil_ent.[Fiscal End Month],
 bil_ent.[Bill Cycle]
 from 
 (select * from 
