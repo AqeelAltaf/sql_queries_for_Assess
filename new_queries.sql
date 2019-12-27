@@ -152,12 +152,21 @@ SELECT [Billing Entity], [Assess Year],[Notice Type],  [Letter Date] , COUNT(*) 
 
 
 -- Provide the list of accounts where Bill To and Child has different bill cycles.
+-- Provide the list of accounts where Bill To and Child has different bill cycles.
 select TOURISM_ID__C,BILLING_CYCLE__C   from  
    (select
        CATEGORY_TYPE__C 
 	 , BILLING_CYCLE__C
      , ID 
 	 , TOURISM_ID__C
-     , (select count(distinct BILLING_CYCLE__C ) from BOOMI_DEV.dbo.PRODAccounts where BILL_TO_PARENT__C = base.ID) as [child bcycle count] 
+     , (select count(distinct BILLING_CYCLE__C ) from BOOMI_DEV.dbo.PRODAccounts where BILL_TO_PARENT__C = base.ID and CATEGORY_TYPE__C  ='Assessed') as [child bcycle count] 
 from (select * from BOOMI_DEV.dbo.PRODAccounts where CATEGORY_TYPE__C = 'Parent') base ) _ 
 where [child bcycle count]  > 1
+
+
+-- Exempt Status view for account
+CREATE VIEW dbo.VW_IMIS_AccountExemptStatus
+as 
+select assess.ID, 'Exempt – Business Size (Revenue) 1 year' as [Exempt Status] from IMIS.dbo.Assess  assess 
+LEFT JOIN  BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C
+where EXEMPT_CODE in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50')
