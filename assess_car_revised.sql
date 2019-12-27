@@ -1,4 +1,4 @@
-ALTER VIEW dbo.VW_IMIS_rev_Assess_Car
+ALTER  VIEW [dbo].[VW_IMIS_rev_Assess_Car]
 AS
 (select 
 
@@ -10,6 +10,8 @@ assess_car_vw.[Account],
 [Billing Entity],
 [Completed Date],
 [Filed By User],
+[Ready To Update],
+[Complete],
 [Filed Date],
 [Filed Online],
 [Fiscal End Date],
