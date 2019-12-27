@@ -1,4 +1,4 @@
-ALTER VIEW dbo.VW_IMIS_Assess_Car
+ALTER VIEW [dbo].[VW_IMIS_Assess_Car]
 AS
  (
    
@@ -11,6 +11,8 @@ select
 COALESCE(IMIS_Service.dbo.fn_TransParentID(Account, [Assess Year]), [Account]) as [Billing Entity],
 [Completed Date],
 [Filed By User],
+[Ready To Update],
+[Complete],
 assess_notice.N_FILEDATE as [Filed Date],
 [Filed Online],
 [Fiscal End Date],
@@ -54,6 +56,9 @@ FORMAT(assess_car.DATE_RECEIVED , 'MM/dd/yyyy')as [Completed Date],
 -- If Contact_Email is found in SF then populate that contact in this  lookup otherwise leave it blank.
 email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Filed By User],
 
+
+assess_car.READY_TO_UPDATE as [Ready To Update],
+assess_car.COMPLETE as [Complete],
 assess_car.Filed_online as [Filed Online],
 assess_car.Total_Assessment as [IMIS Assessment Calculation],
 --For eg: if period = "2016-10-01 00:00:00.000" then fiscal end date will be "2016-10-31 00:00:00.000".
@@ -80,4 +85,3 @@ LEFT JOIN IMIS.dbo.Assess_Notice assess_notice on base.Account = assess_notice.I
 LEFT JOIN BOOMI_DEV.dbo.SegmentRate rates on base.[Assess Year] = rates.[AssessYear] and LTRIM(base.[Segment Category]) = rates.[SegmentCategory]
 where base.[Status Flag] != 'D'
 )
-GO
