@@ -403,33 +403,38 @@ from IMIS.dbo.Assess_Audit) base where [Audit Status] in ('open','close') Group 
 
 -- query for Count of 'Exempt' , 'Active Standalone LOCs' and Bils
 
-select Type, count(*) from 
-(select  Category, Status, 
+select Type,[S cat], count(*) from 
+( select  _.Category, Status,  [Segment Code], Type , imis_seg_map.Category as [S cat] from 
+(select  Category, Status,  loc_info.[Segment Code] as [Segment Code], 
 case when Status = 'A' and Category in ('LOC', 'RL')  and VCusField.[IMIS Account Number]  = VCusField.[Bill To Parent]  then 'Active Standalone LOCs' 
 	 when Status = 'A' and Category in ('BIL', 'RB') and VCusField.[IMIS Account Number]  = VCusField.[Bill To Parent] then 'BILs' 
 	 when Status in ('E','IP','IF','I','NA') and Category in ('LOC', 'RL')  and Has_Filed_Ever = 1  then 'Exempt'
 	 else '' 
 end as [Type] 
    from  [BOOMI].[dbo].[vIMIS_Name] base 
-   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number] ) main
-   where main.Type in ('Active Standalone LOCs','BILs' , 'Exempt') group by Type
+   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number]
+   LEFT JOIN  vIMIS_Loc_Info loc_info  on loc_info.[IMIS Account Number] = base.[IMIS Account Number] ) _
+     LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  _.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)) main
+   where main.Type in ('Active Standalone LOCs','BILs' , 'Exempt') group by  Type,[S cat] Order by Type
 
 -- for count of Active location 
--- for count of Active location 
-select 
-Type,
- count(Type) from 
-(
-
-select Category, Status,base.[IMIS Account Number], 
+select-- Type,[S cat]
+--,[IMIS Account Number] 
+ [S cat], count(*) 
+from 
+( select  [IMIS Account Number] ,_.Category, Status,  [Segment Code], Type , imis_seg_map.Category as [S cat]  from 
+(select 
+ base.[IMIS Account Number] , Category, Status,  loc_info.[Segment Code] as [Segment Code], 
 case 
 	when Status = 'A' and Category  in ('RL','LOC') and VCusField.[IMIS Account Number] != VCusField.[Bill To Parent]   then 'Bil Active Location'
 	 else '' 
 end as [Type] 
    from  [BOOMI].[dbo].[vIMIS_Name] base 
-   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number]  ) _
-     where Type in ('Bil Active Location') group by Type
-
+   LEFT JOIN   BOOMI_DEV.dbo.vIMIS_CalculatedFields  VCusField on base.[IMIS Account Number] = VCusField.[IMIS Account Number] 
+   LEFT JOIN  vIMIS_Loc_Info loc_info  on loc_info.[IMIS Account Number] = base.[IMIS Account Number] ) _
+     LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  _.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)) main
+ 
+     where Type in ('Bil Active Location') Group  by [S cat]
 
 
         --=================================--
