@@ -83,9 +83,9 @@ select count(*) from dbo.VW_IMIS_rev_Assess_Car
 
 -- making Billing Entity Table
 select Id, ASSESS_YEAR, 
-
-IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity] INTO BOOMI_DEV.dbo.VW_Billing_Entity   from IMIS.dbo.Assess_Notice
-
+IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity] 
+INTO BOOMI_DEV.dbo.VW_Billing_Entity   
+from IMIS.dbo.Assess_Notice
 
 -- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
 -- this function returns the most frequent Letter date for the given  Asses Year , Notice Type and Billing Entity
