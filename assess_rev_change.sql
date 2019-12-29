@@ -1,5 +1,5 @@
  
- CREATE VIEW [dbo].[VW_IMIS_rev_Assess_Change]
+ CREATE VIEW [dbo].[VW_IMIS_rev_Assess_Changes]
  as 
 
 ( 
