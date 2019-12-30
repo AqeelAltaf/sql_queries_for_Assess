@@ -1,7 +1,7 @@
  
  CREATE VIEW [dbo].[VW_IMIS_rev_Assess_Changes]
  as 
-
+-- Changes view made by aqeel.altaf@gettectonic.com
 ( 
    select
 

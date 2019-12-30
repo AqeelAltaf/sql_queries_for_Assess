@@ -1,5 +1,6 @@
 CREATE VIEW [dbo].[VW_IMIS_Notice_Location_Changes]
 AS 
+-- Changes view made by aqeel.altaf@gettectonic.com
 select
 dbo.getLetterDate([Assess Year] ,  [Notice Type]  , main.[Billing Entity] ) as [Letter Date],
  case when [Notice Type] = 'N7' then 'N6' else [Notice Type] end as [Notice Type], 
@@ -31,5 +32,3 @@ unpivot
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.[IMIS Account Number] =  IMIS_name.ID ) main where main.[Status Flag] !='D' 
 
 GO
-
-

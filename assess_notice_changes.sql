@@ -1,5 +1,6 @@
 ALTER VIEW dbo.VW_IMIS_Assess_Notice_Changes
 AS
+-- Changes view made by aqeel.altaf@gettectonic.com
 select 
 [External Id],
 -- as there is no need of Account/Id but Billing Entity will be used as Account in Notice
