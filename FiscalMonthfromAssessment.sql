@@ -84,18 +84,11 @@ select top 1
     -- query to get all non tie records --
     --------------------------------------
 Alter VIEW dbo.VW_IMIS_ParFiscalMonth as
-select 
-main.[Billing Entity] as Parent,
-main.[Fiscal Month] as [Fiscal End Month],
-case when main.[Fiscal Month] > 0 and  main.[Fiscal Month] < 12  then  FORMAT(CONVERT(INT,main.[Fiscal Month] +1), '00') 
-			      when main.[Fiscal Month] = 12 then '01' 
-                       else '' end as [Fiscal Start Month],
-bil_ent.ID as Location,
-bil_ent.[Assess Year],
-bil_ent.[Source Name],
-bil_ent.[Bill Cycle]
-from 
-(select * from 
+select * ,
+       case when [Fiscal Month] > 0 and  [Fiscal Month] < 12  then  FORMAT(CONVERT(INT,[Fiscal Month] +1), '00') 
+            when [Fiscal Month] = 12 then '01' 
+            else '' end as [Fiscal Start Month]
+     from 
 (
 select 
 [Billing Entity],
@@ -103,8 +96,5 @@ dbo.getMaxFiscalMonthfromAssessment([Billing Entity],[Bill Cycle]) as [Fiscal Mo
 [Target Assess Year]
 from
  (select distinct [Billing Entity],[Bill Cycle],[Target Assess Year]
- from  BOOMI_DEV.dbo.BilEnt_Assessments where ID != [Billing Entity]) base )_ 
-  where _.[Fiscal Month] != 'tie'
-  ) main
- LEFT JOIN BOOMI_DEV.dbo.BilEnt_Assessments bil_ent on bil_ent.[Billing Entity] = main.[Billing Entity]  and main.[Target Assess Year] = bil_ent.[Assess Year]
-
+ from  BOOMI_DEV.dbo.BilEnt_Assessments ) base )_ 
+  where  _.[Fiscal Month] is Null or _.[Fiscal Month] != 'tie'
