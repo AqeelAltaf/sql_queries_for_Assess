@@ -2,6 +2,7 @@ ALTER VIEW dbo.VW_IMIS_Assess_Notice_Changes
 AS
 -- Changes view made by aqeel.altaf@gettectonic.com
 select 
+SYS_CHANGE_OPERATION, SYS_CHANGE_VERSION ,
 [External Id],
 -- as there is no need of Account/Id but Billing Entity will be used as Account in Notice
 [Billing Entity] as [Account] ,
@@ -36,7 +37,8 @@ case when [Letter Date] in ('01/01/1900','01/02/1900','01/03/1900','01/04/1900',
 [IMIS Notice File Date]
  from 
  (  
-   select 
+   select
+SYS_CHANGE_OPERATION, SYS_CHANGE_VERSION , 
 DENSE_RANK() OVER(PARTITION By [Assess Year], [Billing Entity], [Notice Type] ORDER BY Account) as RowNumber,
 main.[External Id],
 main.[Account] ,
@@ -92,7 +94,7 @@ case when main.[Notice Type] in ('N1','N2','N3','N4','N5','N6','N7') and main.Ma
    select
 
 --
-
+base.SYS_CHANGE_OPERATION, base.SYS_CHANGE_VERSION , 
 -- this is temporary column only for saving maximum date
 case when base.[NoticeType] in ('N1','N2','N3','N4','N5','N6','N7')
  then format(COALESCE(assess_notice1.N7,assess_notice1.N6,assess_notice1.N5,assess_notice1.N4,assess_notice1.N3,assess_notice1.N2,assess_notice1.N1),'MM/dd/yyyy') 

@@ -2,15 +2,18 @@ CREATE VIEW [dbo].[VW_IMIS_Notice_Location_Changes]
 AS 
 -- Changes view made by aqeel.altaf@gettectonic.com
 select
+SYS_CHANGE_OPERATION, SYS_CHANGE_VERSION ,
 dbo.getLetterDate([Assess Year] ,  [Notice Type]  , main.[Billing Entity] ) as [Letter Date],
  case when [Notice Type] = 'N7' then 'N6' else [Notice Type] end as [Notice Type], 
  [Current SEQN],
  [Account],
  [Billing Entity],
   [Assess Year]
+
   from 
 (
   select
+  SYS_CHANGE_OPERATION, SYS_CHANGE_VERSION ,
 base.Test as [Letter Date],
 base.[NoticeType] as [Notice Type],
 base.SEQN   as [Current SEQN],
