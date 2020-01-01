@@ -28,5 +28,6 @@ unpivot
   Test
   for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
 ) as NoticeType  ) base
- LEFT JOIN IMIS.dbo.Name IMIS_name on base.Id =  IMIS_name.ID ) main where main.[Status Flag] !='D' 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.Id =  IMIS_name.ID where IMIS_name.[Status] != 'D' ) main  
+ LEFT JOIN IMIS.dbo.Name IMIS_name on main.[Billing Entity] =  IMIS_name.ID where IMIS_name.[Status] != 'D' 
 GO

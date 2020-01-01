@@ -37,6 +37,7 @@ case when [Letter Date] in ('01/01/1900','01/02/1900','01/03/1900','01/04/1900',
  (  
    select 
 DENSE_RANK() OVER(PARTITION By [Assess Year], [Billing Entity], [Notice Type] ORDER BY Account) as RowNumber,
+IMIS_name_bent.Status  as [bent_Status],
 main.[External Id],
 main.[Account] ,
 main.[Assess Year],
@@ -173,8 +174,12 @@ LEFT JOIN IMIS.dbo.Assess_Notice assess_notice1 on base.SEQN = assess_notice1.SE
  LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
 LEFT JOIN IMIS.dbo.Assess_Audit ass_aud on base.[NoticeType] in ('A1','A2','A3')   and base.Id = ass_aud.ID and base.[ASSESS_YEAR]  = ass_aud.AuditYear ) main 
+-- joining second time to  exclude status of 'D' for Billing Entity 
+LEFT JOIN IMIS.dbo.Name IMIS_name_bent on main.[Billing Entity] =  IMIS_name_bent.ID
 LEFT JOIN BOOMI_DEV.dbo.SegmentRate rates on main.[Assess Year] = rates.[AssessYear] and main.[Segment] = rates.[SegmentCategory] 
 LEFT JOIN BOOMI_DEV.dbo.SegmentMax seg_max on main.[Assess Year] = seg_max.[PreviousFiscalYear] and main.[Segment Code] = seg_max.[SEGMENT_CODE__C] 
 LEFT JOIN BOOMI_DEV.dbo.BillingPeriod billing_period on main.[Notice Type] in ('N1','N2','N3','N4','N5','N6','N7','AQ1','AQ2','AQ3') and main.[Assess Year]  = billing_period.ASSESS_YEAR__C and main.[Bill Cycle] =  billing_period.BILL_CYCLE__C 
 where main.[Status Flag] != 'D'
-)  vw_assess_not  where RowNumber = 1  ;
+)  vw_assess_not 
+
+where RowNumber = 1 and [bent_Status] ! = 'D'     ;
