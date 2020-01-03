@@ -29,6 +29,8 @@ select [Assess Year],
 	select  * from (
  
 	select assess.Assess_Year as [Assess Year],
+	assess.Superseded,
+	assess.READY_TO_POST,
 	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
 	COALESCE(imis_seg_map.category, acc.Segment_Category__C) as [Segment Category],
 	assess.GROSS_RECEIPTS + assess.S_GROSS_REVENUE  + assess.SECSEG_GROSSRECEIPTS as [Gross Revenue],
@@ -36,7 +38,7 @@ select [Assess Year],
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
 	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C )
-base where base.Status != 'D' and  base.[Assess Year] != '' ) main GROUP BY [Assess Year], [Segment Category]
+base where base.Status != 'D' and  base.[Assess Year] != '' and base.Superseded = 0  and base.READY_TO_POST = 1 ) main GROUP BY [Assess Year], [Segment Category]
 
 
 -- total assessment due  from IMIS tables
