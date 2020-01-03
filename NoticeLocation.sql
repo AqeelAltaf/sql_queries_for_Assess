@@ -14,7 +14,7 @@ base.Test as [Letter Date],
 base.[NoticeType] as [Notice Type],
 base.SEQN   as [Current SEQN],
 base.Id as [Account],
-IMIS_Service.dbo.fn_TransParentID(base.Id, base.ASSESS_YEAR)  as [Billing Entity],
+b_ent.[Billing Entity] as [Billing Entity], 
 base.ASSESS_YEAR as [Assess Year],
 IMIS_name.STATUS as [Status Flag]
 
@@ -28,6 +28,7 @@ unpivot
   Test
   for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
 ) as NoticeType  ) base
+LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = base.ID and b_ent.ASSESS_YEAR = base.ASSESS_YEAR
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.Id =  IMIS_name.ID where IMIS_name.[Status] != 'D' ) main  
  LEFT JOIN IMIS.dbo.Name IMIS_name on main.[Billing Entity] =  IMIS_name.ID where IMIS_name.[Status] != 'D' 
 GO
