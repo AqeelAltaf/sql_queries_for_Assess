@@ -52,12 +52,11 @@ select
 	select assess.Assess_Year as [Assess Year],
 	assess.ID,
 	ware_rev.Company,
-	Superseded,
-	assess.READY_TO_POST,
 	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
 	COALESCE(imis_seg_map.category, acc.Segment_Category__C) as [Segment Category],
 	case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
-	assess.IsPaid as [IsPaid],
+	assess.[Superseded] as [Superseded],
+	assess.READY_TO_POST as READY_TO_POST,
 	IMIS_name.Status  as [Status] 
    from IMIS.dbo.Assess assess
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
@@ -66,7 +65,7 @@ select
 	LEFT JOIN (select * from BOOMI.[dbo].[vIMIS_Warehouse_Revenue] ware_rev_ where ware_rev_.[FOR Assessment Year] in ('2018/19','2018/19') ) ware_rev  on ware_rev.[IMIS Account Number] = assess.ID 
 )base  
 where base.Company is Null  and
- base.IsPaid = 0 and base.Status != 'D' and  base.[Assess Year] in ('2018/19','2019/20') and base.Superseded = 0 and base.READY_TO_POST = 1  ) main 
+ base.[Superseded]  = 0 and base.READY_TO_POST = 1  and base.Status != 'D' and  base.[Assess Year] in ('2018/19','2019/20') and base.Superseded = 0 and base.READY_TO_POST = 1  ) main 
 GROUP BY [Assess Year], [Segment Category]
 ORDER BY [Segment Category] , [Assess Year]
 
@@ -79,7 +78,7 @@ select sum([IMIS Assessment Calculation]) from BOOMI_DEV.dbo.[VW_IMIS_rev_Assess
 
  
         --=================================--
---What: Notices from previous years (2018/19)
+--What: ALl notices years (2018/19)
 --Values: Count of notices
 --How: by year by notice number
 --Result: Counts must be the same in both systems
@@ -304,31 +303,6 @@ Order by SEGMENT_CATEGORY__C
 
 
 
-        --=================================--
--- What: Filed unpaid
--- Values: Assessment Due, Count
--- How: by segment, by year(filing for year)
--- Results: Count of Locations must match, Sum of assessment due must match
-
-select [Assess Year],
- [Segment Code],
- count(*),
- sum([IMIS Assessment Calculation]) as [Assessment Due]
-  from 
-(
-	select  * from (
- 
-	select assess.Assess_Year as [Assess Year],
-	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
-	case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
-	Format(assess_notice.N_FILEDATE,'MM/dd/yyyy') as [Filed Date],
-	assess.IsPaid as [IsPaid],
-	IMIS_name.Status  as [Status] from IMIS.dbo.Assess assess
-	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
-	LEFT JOIN IMIS.dbo.Assess_Notice assess_notice on assess.ID = assess_notice.ID and assess.ASSESS_YEAR = assess_notice.ASSESS_YEAR
-	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
-	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  )
-base where base.IsPaid = 'False' and base.Status != 'D' and  base.[Assess Year] != '' and [Filed Date] != '') main GROUP BY [Assess Year], [Segment Code]
 
 
         --=================================--
