@@ -10,8 +10,6 @@
 -- Values: total gross revenue, assessment due, count of Assess
 -- How: By segment (from assess) and Assess year.
 -- Result: All values match from each system
--- confusions/things to ask : what is assessment_due?? s it assessment Cal??
-
 
 --- from our view  (this for validation from intermediate view , you can ignore this as I've provide same query on table )
 select [Assess Year],
@@ -80,12 +78,10 @@ select sum([IMIS Assessment Calculation]) from BOOMI_DEV.dbo.[VW_IMIS_rev_Assess
 
  
         --=================================--
---What: ALl notices years (2018/19)
+--What: All notices of 2018/19
 --Values: Count of notices
 --How: by year by notice number
 --Result: Counts must be the same in both systems
---confusions/things to ask : Notice Number means Notice Type?? do we need to fetch 2018/19 records ?
-
 
 -- from IMIS table 
 
@@ -110,7 +106,6 @@ unpivot
 -- Values: January billing cycle
 -- How: Number of notices by segment by type(BIL or LOC)
 -- Result: Counts must be the same in both systems
--- confusions/things to ask : 
 ------------------------------------------------------
 -- for BIL
 ------------------------------------------------------
@@ -159,7 +154,7 @@ unpivot
  Order by SEGMENT_CATEGORY__C
 
 -------------==============================-----------
--- N NOtice for 2018/19 January Cycle
+-- N NOtice for 2019/20 January Cycle
 -------------==============================-----------
 select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
 ( select  acc.SEGMENT_CATEGORY__C, 
@@ -180,7 +175,7 @@ unpivot
  Order by SEGMENT_CATEGORY__C
 
 -------------==============================-----------
--- N NOtice for 2018/19 July Cycle
+-- N NOtice for 2019/20 July Cycle
 -------------==============================-----------
 select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
 ( select  acc.SEGMENT_CATEGORY__C, 
@@ -296,18 +291,6 @@ Order by SEGMENT_CATEGORY__C
 
 
         --=================================--
--- What: renewal date (similar to notice count)
--- Values: Count of LOCs
--- How: By segment, by date, by status
--- Results: Counts must be the same in both systems
--- confusions/things to ask/notes : this column is not ready yet , will do it later 
-
-
-
-
-
-
-        --=================================--
 -- What: off cycle notices (not part of Jan cycle)
 -- Values: Counts
 -- How: LOCS by segment by notice number
@@ -340,6 +323,7 @@ unpivot
 
 -- Audit Checked  = True closed else open
 -- things to ask: is me AuditReson sab ke null arhe hain
+
 select  AuditYear , [Audit Status] , count(*) as [Audit counts]
 from (select  [AuditYear],
 		 case when LowTNT = 1 and LowTNT_Cleared is NUll  then 'open'  
