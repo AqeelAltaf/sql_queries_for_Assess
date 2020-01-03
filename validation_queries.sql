@@ -62,7 +62,7 @@ select
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
 	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  
-	LEFT JOIN (select * from BOOMI.[dbo].[vIMIS_Warehouse_Revenue] ware_rev_ where ware_rev_.[FOR Assessment Year] in ('2018/19','2018/19') ) ware_rev  on ware_rev.[IMIS Account Number] = assess.ID 
+	LEFT JOIN (select * from BOOMI.[dbo].[vIMIS_Wa rehouse_Revenue] ware_rev_ where ware_rev_.[FOR Assessment Year] in ('2018/19','2018/19') ) ware_rev  on ware_rev.[IMIS Account Number] = assess.ID 
 )base  
 where base.Company is Null  and
  base.[Superseded]  = 0 and base.READY_TO_POST = 1  and base.Status != 'D' and  base.[Assess Year] in ('2018/19','2019/20') and base.Superseded = 0 and base.READY_TO_POST = 1  ) main 
