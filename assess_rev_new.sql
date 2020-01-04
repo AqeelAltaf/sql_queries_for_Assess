@@ -1,4 +1,4 @@
-ALTER VIEW [dbo].[VW_IMIS_rev_Assess]
+CREATE VIEW [dbo].[VW_IMIS_rev_Assess]
 AS
  ( 
    select
@@ -33,11 +33,15 @@ case
     -- -- if FISCAL MONTH is not given make Fiscal End date with these  values 
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2016' 
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
-     when COALESCE(
-    Under1M_EndDate,
-  TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
-  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))),'MM/dd/yyyy') 
-  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('06','/','30','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))) ,'MM/dd/yyyy')
+     
+    when Under1M_EndDate is not Null   then FORMAT(Under1M_EndDate,'MM/dd/yyyy') 
+  when TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1')) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
+  -- when both Fiscal Month and Fiscal year are '' then make 12 as end month default , assess year's first part in case of january and  assess year's first part minus one in case of january  
+  when base.FISCAL_MONTH = '' and base.[Fiscal Year] = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) ))) ,'MM/dd/yyyy')
+  when base.FISCAL_MONTH = '' and base.[Fiscal Year] = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) )-1 ))) ,'MM/dd/yyyy')
+  
+  when base.FISCAL_MONTH = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(base.[Fiscal Year]))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('06','/','30','/',(base.[Fiscal Year]))) ,'MM/dd/yyyy')
        else '' end as [Fiscal End Date],
 
 -- case when base.Fiscal_Month != '' then RIGHT('0'+base.Fiscal_Month,2) else null  end as [Fiscal End Month],
@@ -51,11 +55,13 @@ case
     when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '01/01/2016' 
     when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2015' 
     --else make it using Fical Month
-    when COALESCE(
-    Under1M_BeginDate,
-  TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))))),'MM/dd/yyyy') 
-  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year]))))),'MM/dd/yyyy') 
-  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('07','/','01','/',(SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])))-1)) ,'MM/dd/yyyy')
+    
+    when Under1M_BeginDate is not Null then FORMAT(Under1M_BeginDate ,'MM/dd/yyyy')
+  when TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year]))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year])))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Fiscal Year]  = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) ))),'MM/dd/yyyy')
+  when base.FISCAL_MONTH = '' and base.[Fiscal Year]  = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',(CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) )-1 ))),'MM/dd/yyyy')
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%'  then  FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',(base.[Fiscal Year]))),'MM/dd/yyyy') 
+  when base.FISCAL_MONTH = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%'  then  FORMAT(TRY_CONVERT(date,CONCAT('07','/','01','/',(base.[Fiscal Year])-1)) ,'MM/dd/yyyy')  
     else ''  end  as [Fiscal Start Date],
 
 
@@ -129,13 +135,20 @@ assess_audit_vw.[IMIS Missed Projection Reason],
 assess_audit_vw.[IMIS Below1Mil],
 assess_audit_vw.[IMIS Below1mil_Cleared] ,
 assess_audit_vw.[IMIS Writeoff Amount],
-
+--[Fiscal Year],
+[Assess Fiscal Month], 
+[Assess Fiscal Year],
 concat(base.[External Id],'-',base.[Account]) as [External Id]
  from
  (select
+ assess.Fiscal_Month  as [Assess Fiscal Month], 
+ assess.FISCAL_YEAR as [Assess Fiscal Year], 
  Under1M_BeginDate as Under1M_BeginDate,
  Under1M_EndDate as Under1M_EndDate,
- FISCAL_YEAR as FISCAL_YEAR,
+ case when FISCAL_YEAR != '' then FISCAL_YEAR 
+      when assess_fiscal.[Fiscal Year] != ''  and assess_fiscal.[Fiscal Year] is not Null  then convert(varchar(4),assess_fiscal.[Fiscal Year])
+       
+ else  ''  end  as [Fiscal Year],
  IMIS_name.STATUS as [Status Flag],
  -- Use external id to populate this field
   assess.ID as 'Account',
@@ -226,6 +239,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   IMIS.dbo.Assess assess 
    LEFT JOIN(select   id , ASSESS_YEAR,count(*) as [sup_flag] from IMIS.dbo.Assess   group by assess_year, id having count(*) > 1) assess1  on assess.id = assess1.id and assess.assess_year = assess1.assess_year 
   LEFT JOIN BOOMI_DEV.dbo.Email__c email ON assess.Contact_Email = email.NAME
+  LEFT JOIN BOOMI_DEV.dbo.VW_IMIS_Asess_Fiscals assess_fiscal on  assess.SEQN = assess_fiscal.SEQN and  assess.ID = assess_fiscal.ID and assess.ASSESS_YEAR = assess_fiscal.Assess_Year and assess.SEQN = assess_fiscal.SEQN   
   LEFT JOIN (select acc1.*, acc2.IMIS_ID__C as [IMIS_ID]  from BOOMI_DEV.dbo.PRODAccounts acc1 left join BOOMI_DEV.dbo.PRODAccounts  acc2 on acc1.BILL_TO_PARENT__C = acc2.ID) acc ON assess.ID = acc.TOURISM_ID__C
   LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
   LEFT JOIN IMIS.dbo.Assess_Notice assess_notice on assess.ID = assess_notice.ID and assess.ASSESS_YEAR = assess_notice.ASSESS_YEAR
@@ -238,7 +252,4 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
 	where base.[Assess Year] ! = '' and base.[Assess Year] ! = '2'  and base.[Status Flag] != 'D'
     )  
 
-
 GO
-
-
