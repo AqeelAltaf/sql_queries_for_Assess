@@ -55,7 +55,7 @@ select  a , count(a) from (select distinct assess.ID ,acc.CATEGORY_TYPE__C,acc.B
 
 case when acc.CATEGORY_TYPE__C  = 'Exempt' and acc.BILL_TO_PARENT__C is Null then 'standalone Bill'
      when acc.CATEGORY_TYPE__C  = 'Parent' 
-	 and 
+	 and
 	 (select count(*) from PRODAccounts where BILL_TO_PARENT__C = assess.ID ) 
 	 = (select count(*) from PRODAccounts where BILL_TO_PARENT__C = assess.ID and CATEGORY_TYPE__C = 'Exempt' )  then 'exempted bill'
 	 else 'check for child fiscals' end as [a] 

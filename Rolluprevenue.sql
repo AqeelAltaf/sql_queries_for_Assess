@@ -1,8 +1,8 @@
-ALTER VIEW dbo.VW_IMIS_Roll_up_Revenue as
+ALTER VIEW [dbo].[VW_IMIS_Roll_up_Revenue] as
     select loc_info.ID as  ID,
 	name.CO_ID AS CO_ID
  from IMIS.dbo.Loc_Info    loc_info
- LEFT JOIN IMIS.dbo.Name name on loc_info.ID = name.ID and loc_info.REVENUE_ROLLUP = 1
+ LEFT JOIN IMIS.dbo.Name name on loc_info.ID = name.ID and loc_info.REVENUE_ROLLUP = 1 where name.STATUS != 'D'
 
 
 
