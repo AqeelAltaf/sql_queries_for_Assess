@@ -113,86 +113,154 @@ unpivot
 -------------==============================-----------
 -- N NOtice for 2018/19 January Cycle
 -------------==============================-----------
-select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
-( select  acc.SEGMENT_CATEGORY__C, 
-case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
- from
- ( select
-     -- IMIS_Service.dbo.fn_TransParentID(Id, ASSESS_YEAR)  as [Billing Entity],
-	 *
-
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code] ,
+base.[Notice Type] as NoticeType ,
+ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+from 
+( 
+select 
+_.*, 
+case when _.NoticeType = 'N7' then 'N6' else _.NoticeType end as [Notice Type] ,
+b_ent.[Billing Entity] as [Billing Entity]
+ 
+ from 
+ ( 
+     select *
 FROM IMIS.dbo.Assess_Notice 
 unpivot
 (
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
-) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
- LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='January' and IMIS_name.STATUS != 'D' and base.ASSESS_YEAR = '2018/19') main 
- Group by SEGMENT_CATEGORY__C, NoticeType
- Order by SEGMENT_CATEGORY__C
+) as NoticeType  ) _
+ LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = _.ID and b_ent.ASSESS_YEAR = _.ASSESS_YEAR) base 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.[Billing Entity] =  IMIS_name.ID
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.[Billing Entity] = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.[Billing Entity] 
+
+ where v_name.[Billing Cycle] like 'jan%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19'
+ ) main 
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis) 
+ where rn = 1
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
 
 -------------==============================-----------
 -- N NOtice for 2018/19 July Cycle
 -------------==============================-----------
-select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
-( select  acc.SEGMENT_CATEGORY__C, 
-case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
- from
- ( select
-	 * FROM IMIS.dbo.Assess_Notice 
-unpivot
-(
-  Test
-  for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
-) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
- LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='July' and IMIS_name.STATUS != 'D' and base.ASSESS_YEAR = '2018/19') main 
- Group by SEGMENT_CATEGORY__C, NoticeType
- Order by SEGMENT_CATEGORY__C
-
--------------==============================-----------
--- N NOtice for 2019/20 January Cycle
--------------==============================-----------
-select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
-( select  acc.SEGMENT_CATEGORY__C, 
-case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
- from
- ( select
-	 *
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code] ,
+base.[Notice Type] as NoticeType ,
+ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+from 
+( 
+select 
+_.*, 
+case when _.NoticeType = 'N7' then 'N6' else _.NoticeType end as [Notice Type] ,
+b_ent.[Billing Entity] as [Billing Entity]
+ 
+ from 
+ ( 
+     select *
 FROM IMIS.dbo.Assess_Notice 
 unpivot
 (
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
-) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
- LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='January' and IMIS_name.STATUS != 'D' and base.ASSESS_YEAR = '2019/20') main 
- Group by SEGMENT_CATEGORY__C, NoticeType
- Order by SEGMENT_CATEGORY__C
+) as NoticeType  ) _
+ LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = _.ID and b_ent.ASSESS_YEAR = _.ASSESS_YEAR) base 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.[Billing Entity] =  IMIS_name.ID
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.[Billing Entity] = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.[Billing Entity] 
+
+ where v_name.[Billing Cycle] like 'jul%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19'
+ ) main 
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis) 
+ where rn = 1
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
 
 -------------==============================-----------
--- N NOtice for 2019/20 July Cycle
+-- N NOtice for 2019/20 January Cycle
 -------------==============================-----------
-select  SEGMENT_CATEGORY__C ,  NoticeType, count(*) as [Count of Notices] from 
-( select  acc.SEGMENT_CATEGORY__C, 
-case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
- from
- ( select
-	 * FROM IMIS.dbo.Assess_Notice 
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code] ,
+base.[Notice Type] as NoticeType ,
+ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+from 
+( 
+select 
+_.*, 
+case when _.NoticeType = 'N7' then 'N6' else _.NoticeType end as [Notice Type] ,
+b_ent.[Billing Entity] as [Billing Entity]
+ 
+ from 
+ ( 
+     select *
+FROM IMIS.dbo.Assess_Notice 
 unpivot
 (
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
-) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
- LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='July' and IMIS_name.STATUS != 'D' and base.ASSESS_YEAR = '2019/20') main 
- Group by SEGMENT_CATEGORY__C, NoticeType
- Order by SEGMENT_CATEGORY__C
+) as NoticeType  ) _
+ LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = _.ID and b_ent.ASSESS_YEAR = _.ASSESS_YEAR) base 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.[Billing Entity] =  IMIS_name.ID
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.[Billing Entity] = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.[Billing Entity] 
+
+ where v_name.[Billing Cycle] like 'jan%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20'
+ ) main 
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis) 
+ where rn = 1
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
+
+-------------==============================-----------
+-- N NOtice for 2019/20 July Cycle
+-------------==============================-----------
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code] ,
+base.[Notice Type] as NoticeType ,
+ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+from 
+( 
+select 
+_.*, 
+case when _.NoticeType = 'N7' then 'N6' else _.NoticeType end as [Notice Type] ,
+b_ent.[Billing Entity] as [Billing Entity]
+ 
+ from 
+ ( 
+     select *
+FROM IMIS.dbo.Assess_Notice 
+unpivot
+(
+  Test
+  for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
+) as NoticeType  ) _
+ LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = _.ID and b_ent.ASSESS_YEAR = _.ASSESS_YEAR) base 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.[Billing Entity] =  IMIS_name.ID
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.[Billing Entity] = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.[Billing Entity] 
+
+ where v_name.[Billing Cycle] like 'jul%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20'
+ ) main 
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis) 
+ where rn = 1
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
 
 ------------------------------------------------------
 -- for child/ Account / Loc
@@ -202,10 +270,13 @@ unpivot
 -- N NOtice for 2018/19 January Cycle
 -------------==============================-----------
 
-select SEGMENT_CATEGORY__C  , NoticeType , count(*) as [Count of Notices] from  (
-select acc.SEGMENT_CATEGORY__C,  
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code],   
 case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
-  from 
+ from 
  ( 
      select *
 FROM IMIS.dbo.Assess_Notice 
@@ -214,21 +285,28 @@ unpivot
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
 ) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='January' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19') main
-Group by SEGMENT_CATEGORY__C, NoticeType 
-Order by SEGMENT_CATEGORY__C
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.ID = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.ID 
+
+ where v_name.[Billing Cycle] like 'jan%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19'
+ ) main
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
 
 
 -------------==============================-----------
--- N NOtice for 2018/19 January Cycle
+-- N NOtice for 2018/19 July Cycle
 -------------==============================-----------
 
-select SEGMENT_CATEGORY__C  , NoticeType , count(*) as [Count of Notices] from  (
-select acc.SEGMENT_CATEGORY__C,  
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code],   
 case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
-  from 
+ from 
  ( 
      select *
 FROM IMIS.dbo.Assess_Notice 
@@ -237,21 +315,28 @@ unpivot
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
 ) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='July' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19') main
-Group by SEGMENT_CATEGORY__C, NoticeType 
-Order by SEGMENT_CATEGORY__C
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.ID = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.ID 
+
+ where v_name.[Billing Cycle] like 'jul%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2018/19'
+ ) main
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category , NoticeType
 
 
 -------------==============================-----------
 -- N NOtice for 2019/20 January Cycle
 -------------==============================-----------
 
-select SEGMENT_CATEGORY__C  , NoticeType , count(*) as [Count of Notices] from  (
-select acc.SEGMENT_CATEGORY__C,  
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code],   
 case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
-  from 
+ from 
  ( 
      select *
 FROM IMIS.dbo.Assess_Notice 
@@ -260,21 +345,27 @@ unpivot
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
 ) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='January' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20') main
-Group by SEGMENT_CATEGORY__C, NoticeType 
-Order by SEGMENT_CATEGORY__C
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.ID = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.ID 
 
+ where v_name.[Billing Cycle] like 'jan%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20'
+ ) main
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category 
 
 -------------==============================-----------
 -- N NOtice for 2019/20 July Cycle
 -------------==============================-----------
 
-select SEGMENT_CATEGORY__C  , NoticeType , count(*) as [Count of Notices] from  (
-select acc.SEGMENT_CATEGORY__C,  
+select  
+imis_seg_map.Category as [Segment Category] , NoticeType , count(*) as [Count of Notices] 
+ from  (
+select 
+loc_info.CURRENT_SEGMENT as [Segment Code],   
 case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType 
-  from 
+ from 
  ( 
      select *
 FROM IMIS.dbo.Assess_Notice 
@@ -283,12 +374,15 @@ unpivot
   Test
   for  NoticeType in (N1,N2,N3,N4,N5,N6,N7)
 ) as NoticeType  ) base
- LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON base.ID = acc.TOURISM_ID__C
  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where acc.BILLING_CYCLE__C ='January' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20') main
-Group by SEGMENT_CATEGORY__C, NoticeType 
-Order by SEGMENT_CATEGORY__C
+ LEFT JOIN BOOMI.dbo.vIMIS_Name  v_name on base.ID = v_name.[IMIS Account Number] 
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.ID 
 
+ where v_name.[Billing Cycle] like 'jul%' and IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR = '2019/20'
+ ) main
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis)
+Group by imis_seg_map.Category , NoticeType 
+Order by imis_seg_map.Category 
 
         --=================================--
 -- What: off cycle notices (not part of Jan cycle)
