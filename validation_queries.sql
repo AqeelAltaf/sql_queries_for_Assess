@@ -522,7 +522,7 @@ group by VW_dist.Region
 
 select [Assess Year],
  [Segment Category],
- sum([IMIS Assessment Calculation]) as [Assessment Due]
+ sum([IMIS Assessment Calculation]) as [Previous Year Revenue]
   from 
 (
 	select  * from (
@@ -530,15 +530,9 @@ select [Assess Year],
 	select assess.Assess_Year as [Assess Year],
 	COALESCE(imis_seg_map.value_in_salesforce, acc.Segment_Code__C) as [Segment Code],
 	COALESCE(imis_seg_map.category, acc.Segment_Category__C) as [Segment Category],
-	case when assess.Exempt_Code not in  ('','NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
+	case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  end as [IMIS Assessment Calculation],
 	IMIS_name.Status  as [Status] from IMIS.dbo.Assess assess
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
 	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  )
-base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] != '2018/19' ) main GROUP BY [Assess Year], [Segment Category]
-
-
-
-   --Join with vIMIS_CalculatedFields view on the basis of ID and apply check Bill to Parent = ''
-   select * from BOOMI_DEV.dbo.vIMIS_CalculatedFields GRoup by [IMIS Account Number] having count(*) > 1
-      select count(*) from BOOMI_DEV.dbo.vIMIS_CalculatedFields where [Bill To Parent] = ''
+base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] = '2018/19' ) main where main.[Segment Category] is not Null and main.[Segment Category]!= 'Not Available' GROUP BY [Assess Year], [Segment Category]
