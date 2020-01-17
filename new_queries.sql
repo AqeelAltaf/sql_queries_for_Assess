@@ -165,8 +165,31 @@ where [child bcycle count]  > 1
 
 
 -- Exempt Status view for account
-CREATE VIEW dbo.VW_IMIS_AccountExemptStatus
+ALTER VIEW dbo.VW_IMIS_AccountExemptStatus
 as 
-select assess.ID, 'Exempt – Business Size (Revenue) 1 year' as [Exempt Status] from IMIS.dbo.Assess  assess 
-LEFT JOIN  BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C
-where EXEMPT_CODE in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50')
+-- this view contains all the latest assess records which have Exempt Status  =  'Exempt – Business Size (Revenue) 1 year'
+select  * ,'Exempt – Business Size (Revenue) 1 year' as [Exempt Status] 
+from  (select assess.ID  , assess.Assess_Year ,IMIS_name.Status ,EXEMPT_CODE ,  ROW_NUMBER() over(PARTITION BY assess.ID  ORDER BY assess.Assess_Year DESC) as rn
+from IMIS.dbo.Assess  assess 
+LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID ) _ 
+where rn = 1 and EXEMPT_CODE in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') and Status  != 'D'
+
+
+
+-- View for Assess Percentage Torism which have Complete = 0, Exempt_Code != '' and Primary Percent Tourism = 0
+Create VIEW dbo.Assess_Perc_Tourism as
+select CONCAT(SEQN,'-',ID) as [External ID] 
+       , [Primary Percent Tourism]
+	   , [Percent Tourism] 
+	  from 
+(select --acc_tour.[Tourism ID] as ID
+      --,
+	    assess.ID
+	  , assess.SEQN
+      , case when SUBSTRING(assess.ASSESS_YEAR,0,CHARINDEX('/', assess.ASSESS_YEAR)) < '2006'then assess.PERCENT_TOURISM 
+	              else assess.S_PERCENT_TOURISM end as [Primary Percent Tourism]
+      , acc_tour.[Percent Tourism] 
+ from dbo.accounts_with_tourism  acc_tour
+INNER JOIN IMIS.dbo.Assess assess on acc_tour.[Tourism ID] = assess.ID
+where assess.COMPLETE =  0 
+and assess.EXEMPT_CODE =  '') base where [Primary Percent Tourism] =  0 
