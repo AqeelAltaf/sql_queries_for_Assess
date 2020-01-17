@@ -1,8 +1,8 @@
-CREATE VIEW [dbo].[VW_IMIS_rev_Assess]
+ALTER VIEW [dbo].[VW_IMIS_rev_Assess]
 AS
  ( 
    select
-
+[System IMIS Assess Cal],
 base.[Account],
  --  Amended From != '' then true else false
  case when base.[Amended From] is not null then 'True' else 'False' end as [Amended],
@@ -34,7 +34,7 @@ case
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jan%' then  '12/31/2016' 
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
      
-    when Under1M_EndDate is not Null   then FORMAT(Under1M_EndDate,'MM/dd/yyyy') 
+    when (Under1M_EndDate is not  Null and Under1M_EndDate != '')   then FORMAT(Under1M_EndDate,'MM/dd/yyyy') 
   when TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1')) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
   -- when both Fiscal Month and Fiscal year are '' then make 12 as end month default , assess year's first part in case of january and  assess year's first part minus one in case of january  
   when base.FISCAL_MONTH = '' and base.[Fiscal Year] = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) ))) ,'MM/dd/yyyy')
@@ -56,7 +56,7 @@ case
     when (Under1M_BeginDate is Null or Under1M_BeginDate = '')  and base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '07/01/2015' 
     --else make it using Fical Month
     
-    when Under1M_BeginDate is not Null then FORMAT(Under1M_BeginDate ,'MM/dd/yyyy')
+    when  (Under1M_BeginDate is not Null and  Under1M_BeginDate != '') then FORMAT(Under1M_BeginDate ,'MM/dd/yyyy')
   when TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year]))) is not null then FORMAT(DATEADD(Month,-11,TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year])))),'MM/dd/yyyy') 
   when base.FISCAL_MONTH = '' and base.[Fiscal Year]  = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) ))),'MM/dd/yyyy')
   when base.FISCAL_MONTH = '' and base.[Fiscal Year]  = '' and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('01','/','01','/',(CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) )-1 ))),'MM/dd/yyyy')
@@ -183,6 +183,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
 -- new changes as of 12/12/2019
   case  when assess.Exempt_Code in ('B200','CEASED','NOTSEG','PBBODY','SECXEA','SECXEE','VOL') then   'Exempt – Other'   
         when assess.Exempt_Code in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') then   'Exempt – Business Size (Revenue) 1 year'
+        when assess.Exempt_Code  = 'NN' then 'Exempt – Non Noticed' 
         else '' end
         as [Exempt Status],
   assess.Exempt_Note as [Exempt Notes],
@@ -203,6 +204,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   assess.GROSS_RECEIPTS as 'Gross Reciept',
   --All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
   case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
+  assess.ASSESSMENT_CALC as [System IMIS Assess Cal],
   assess.Interest as 'IMIS Interest',
   assess.isPaid as 'IMIS IsPaid',
   assess.NUM_OF_MONTHS as [IMIS Num of Months],
