@@ -64,8 +64,8 @@ select
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  
 	LEFT JOIN (select * from BOOMI.[dbo].[vIMIS_Wa rehouse_Revenue] ware_rev_ where ware_rev_.[FOR Assessment Year] in ('2018/19','2019/20') ) ware_rev  on ware_rev.[IMIS Account Number] = assess.ID 
 )base  
-where base.Company is Null  and
- base.[Superseded]  = 0 and base.READY_TO_POST = 1  and base.Status != 'D' and  base.[Assess Year] in ('2018/19','2019/20') and base.Superseded = 0 and base.READY_TO_POST = 1  ) main 
+where base.Company is Null  and base.[IMIS Assessment Calculation] > 0
+ and base.[Superseded]  = 0 and base.READY_TO_POST = 1  and base.Status != 'D' and  base.[Assess Year] in ('2018/19','2019/20') ) main 
 GROUP BY [Assess Year], [Segment Category]
 ORDER BY [Segment Category] , [Assess Year]
 
@@ -418,7 +418,9 @@ unpivot
 -- Audit Checked  = True closed else open
 -- things to ask: is me AuditReson sab ke null arhe hain
 
-select  AuditYear , [Audit Status] , count(*) as [Audit counts]
+select  
+AuditYear , [Audit Status] , count(*) as [Audit counts]
+
 from (select  [AuditYear],
 		 case when LowTNT = 1 and LowTNT_Cleared is NUll  then 'open'  
 		    when DecreaseRevenue = 1 and  DecreaseRevenue_Cleared is NUll  then 'open'
@@ -435,9 +437,13 @@ from (select  [AuditYear],
 			when NoSecondTNT = 1 and  NoSecondTNT_Cleared = 1  then 'close'
 			when RoundedRevenue = 1 and RoundedRevenue_Cleared  = 1 then 'close'
 			end as [Audit Status]
-
-from IMIS.dbo.Assess_Audit) base where [Audit Status] in ('open','close') Group by [AuditYear], [Audit Status] order by [AuditYear]
-
+        ,  assess.ASSESS_YEAR 
+		,  assess.Superseded
+		,  assess.READY_TO_POST
+        from IMIS.dbo.Assess_Audit  assess_audit 
+        LEFT JOIN IMIS.dbo.Assess assess on assess.ID = assess_audit.ID and assess.ASSESS_YEAR = assess_audit.AuditYear
+      ) base where [Audit Status] in ('open','close') and Superseded = 0 and READY_TO_POST = 1 
+Group by [AuditYear], [Audit Status] order by [AuditYear]
         --=================================--
 -- What: Active and exempt locations
 -- Values: count of active standalone LOCs, count of BILs, count of all active locations, count of all exempt LOCs
