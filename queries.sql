@@ -108,5 +108,36 @@ ass_aud.RoundedRevenue as [Rounded Revenue],
 ass_aud.NoSecondTNT as [Secondary TNT]
 
 IMIS.dbo.Assess_Audit ass_aud
+--------------------------------
+-- deduplication EMail Address 
+-------------------------------
+-- deleting records having both status as Active
+WITH CTE as( SELECT NAME, CONTACT__R#IMIS_CONTACT_NUMBER__C  , CONTACT__C,
+ 
+ count(*) OVER(PARTITION BY NAME, CONTACT__R#STATUS__C ) as RN 
+FROM DBO.Email__c  )
+
+Delete  from CTE where RN > 1 and  CONTACT__C 
+ not in ('003f400000bomTsAAI',
+'003f400000bonlyAAA',
+'003f400000bobqmAAA',
+'003f400000bokzZAAQ',
+'003f400000boosVAAQ',
+'003f400000boch8AAA',
+'003f400000bofixAAA',
+'0032T00002AT4o1QAD',
+'003f400000bokrMAAQ',
+'0032T00002ATzP9QAL',
+'0032T00002ATR7cQAH',
+'003f400000bofT0AAI') ;
+
+-- deleting all duplicates with same names
+WITH CTE as( SELECT NAME,CONTACT__R#STATUS__C , CONTACT__R#IMIS_CONTACT_NUMBER__C  ,  CONTACT__C,
+ 
+ COUNT(*) OVER(PARTITION BY NAME ) as RN 
+FROM DBO.Email__c  )
+
+DELETE   from CTE where RN > 1  and CONTACT__R#STATUS__C != 'Active';
+
 
 
