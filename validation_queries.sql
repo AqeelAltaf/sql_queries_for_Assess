@@ -78,17 +78,32 @@ select sum([IMIS Assessment Calculation]) from BOOMI_DEV.dbo.[VW_IMIS_rev_Assess
 
  
         --=================================--
---What: All notices of 2018/19
+--What: All notices except  2018/19 and 2019/20
 --Values: Count of notices
 --How: by year by notice number
 --Result: Counts must be the same in both systems
 
 -- from IMIS table 
 
- select NoticeType , count(*) as [Count of notices] from
- (select 
- case when base.NoticeType = 'N7' then 'N6' else base.NoticeType end as NoticeType
-  from  
+select  
+ASSESS_YEAR
+,imis_seg_map.Category as [Segment Category] 
+, NoticeType 
+, count(*) as [Count of Notices] 
+ from  (
+select 
+ASSESS_YEAR, 
+loc_info.CURRENT_SEGMENT as [Segment Code] ,
+base.[Notice Type] as NoticeType ,
+ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+from 
+( 
+select 
+_.*, 
+case when _.NoticeType = 'N7' then 'N6' else _.NoticeType end as [Notice Type] ,
+b_ent.[Billing Entity] as [Billing Entity]
+ 
+ from 
  ( 
      select *
 FROM IMIS.dbo.Assess_Notice 
@@ -96,8 +111,17 @@ unpivot
 (
   Test
   for  NoticeType in (AQ1,AQ2,AQ3,N1,N2,N3,N4,N5,N6,N7,B1,B2,B3,B4,B5,A1,A2,A3)
-) as NoticeType  ) base  LEFT JOIN IMIS.dbo.Name IMIS_name on base.ID =  IMIS_name.ID
- where   ASSESS_YEAR ='2018/19' and IMIS_name.STATUS != 'D' ) main  Group By NoticeType 
+) as NoticeType  ) _
+ LEFT JOIN BOOMI_DEV.dbo.VW_Billing_Entity b_ent  on b_ent.Id = _.ID and b_ent.ASSESS_YEAR = _.ASSESS_YEAR) base 
+ LEFT JOIN IMIS.dbo.Name IMIS_name on base.[Billing Entity] =  IMIS_name.ID
+ LEFT JOIN  IMIS.dbo.Loc_Info  loc_info  on loc_info.ID = base.[Billing Entity] 
+
+ where  IMIS_name.STATUS != 'D'  and base.ASSESS_YEAR not in  ('2018/19', '2019/20')
+ ) main 
+ LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  main.[Segment Code] = LTRIM(imis_seg_map.code_in_imis) 
+ where rn = 1
+Group by imis_seg_map.Category , NoticeType , ASSESS_YEAR
+Order by case when imis_seg_map.Category is null then 1 else 0 end , imis_seg_map.Category  , NoticeType , ASSESS_YEAR 
 
 -- from our view 
 
