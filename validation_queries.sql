@@ -95,7 +95,7 @@ select
 ASSESS_YEAR, 
 loc_info.CURRENT_SEGMENT as [Segment Code] ,
 base.[Notice Type] as NoticeType ,
-ROW_NUMBER() over(partition by NoticeType , base.ASSESS_YEAR, base.[Billing Entity] order by base.ID)  as rn 
+ROW_NUMBER() over(partition by  base.ASSESS_YEAR, base.[Billing Entity],NoticeType  order by base.ID)  as rn 
 from 
 ( 
 select 
@@ -550,7 +550,9 @@ group by VW_dist.Region
 -- assessment calc
 
 
-select [Assess Year],
+select
+-- previous year revenue for assess 
+ [Assess Year],
  [Segment Category],
  sum([IMIS Assessment Calculation]) as [Previous Year Revenue]
   from 
@@ -565,4 +567,36 @@ select [Assess Year],
 	LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID
 	LEFT JOIN BOOMI_DEV.dbo.IMIS_to_sf_seg_map imis_seg_map ON  assess.segment = LTRIM(imis_seg_map.code_in_imis)
 	LEFT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C  )
-base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] = '2018/19' ) main where main.[Segment Category] is not Null and main.[Segment Category]!= 'Not Available' GROUP BY [Assess Year], [Segment Category]
+base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] = '2018/19' ) main 
+where main.[Segment Category] is not Null and main.[Segment Category]!= 'Not Available' 
+GROUP BY [Assess Year], [Segment Category]
+
+UNION ALL
+
+
+select 
+ -- previous year revenue for assess_car
+[Assess Year],
+ [Segment Category],
+ sum([IMIS Assessment Calculation]) as [Previous Year Revenue]
+  from 
+(
+	select  base.[Assess Year],[Segment Category], base.[Status],[IMIS Assessment Calculation] 
+	from (
+	select 
+     'Passenger Car Rental - E100' as [Segment Code],
+	 'Passenger Car Rental' as [Segment Category],
+	case
+	  when MONTH(assess_car.PERIOD) > 0 and  MONTH(assess_car.PERIOD) <7 and YEAR(assess_car.PERIOD) - 1 < 2009 then TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD)-1,'/','0',YEAR(assess_car.PERIOD)%100))
+      when MONTH(assess_car.PERIOD) > 0 and  MONTH(assess_car.PERIOD) <7 and YEAR(assess_car.PERIOD) - 1  >2008 then TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD)-1,'/',YEAR(assess_car.PERIOD)%100))
+      when MONTH(assess_car.PERIOD) > 6 and  MONTH(assess_car.PERIOD) <13 and YEAR(assess_car.PERIOD) > 2008 then  TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD),'/',(YEAR(assess_car.PERIOD)+1)%100))
+      when MONTH(assess_car.PERIOD) > 6 and  MONTH(assess_car.PERIOD) <13 and YEAR(assess_car.PERIOD) < 2009 then  TRY_CONVERT(varchar ,concat(YEAR(assess_car.PERIOD),'/','0',(YEAR(assess_car.PERIOD)+1)%100)) 
+	 else  Null  end  as [Assess Year],
+	
+	assess_car.Total_Assessment [IMIS Assessment Calculation],
+	IMIS_name.Status  as [Status] 
+  from IMIS.dbo.Assess_Car assess_car
+	LEFT JOIN IMIS.dbo.Name IMIS_name on assess_car.ID =  IMIS_name.ID  )
+base where base.Status != 'D' and  base.[Assess Year] != '' and base.[Assess Year] = '2018/19' ) main 
+where main.[Segment Category] is not Null and main.[Segment Category]!= 'Not Available'
+ GROUP BY [Assess Year], [Segment Category]
