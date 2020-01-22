@@ -11,7 +11,7 @@ select
 COALESCE(IMIS_Service.dbo.fn_TransParentID(Account, [Assess Year]), [Account]) as [Billing Entity],
 [Completed Date],
 [Filed By User],
-[Ready To Update],
+[Ready To Post],
 [Complete],
 assess_notice.N_FILEDATE as [Filed Date],
 [Filed Online],
@@ -57,7 +57,7 @@ FORMAT(assess_car.DATE_RECEIVED , 'MM/dd/yyyy')as [Completed Date],
 email.CONTACT__R#IMIS_CONTACT_NUMBER__C as [Filed By User],
 
 
-assess_car.READY_TO_UPDATE as [Ready To Update],
+assess_car.READY_TO_POST as [Ready To Post],
 assess_car.COMPLETE as [Complete],
 assess_car.Filed_online as [Filed Online],
 assess_car.Total_Assessment as [IMIS Assessment Calculation],
