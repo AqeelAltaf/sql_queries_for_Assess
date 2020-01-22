@@ -35,7 +35,7 @@ case
     when (Under1M_EndDate is Null or Under1M_EndDate = '')  and  base.FISCAL_MONTH = '' and [Completed] = 0  and [Assess Year] = '2016/17' and   LOWER([Bill Cycle]) like 'jul%' then  '06/30/2016' 
      
     when (Under1M_EndDate is not  Null and Under1M_EndDate != '')   then FORMAT(Under1M_EndDate,'MM/dd/yyyy') 
-  when TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1')) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT((base.[Fiscal Year]),'/',base.FISCAL_MONTH,'/','1'))),'MM/dd/yyyy') 
+   when TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year]))) is not null then FORMAT(EOMONTH(TRY_CONVERT(date,CONCAT(base.FISCAL_MONTH,'/','1','/',(base.[Fiscal Year])))),'MM/dd/yyyy') 
   -- when both Fiscal Month and Fiscal year are '' then make 12 as end month default , assess year's first part in case of january and  assess year's first part minus one in case of january  
   when base.FISCAL_MONTH = '' and base.[Fiscal Year] = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jan%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) ))) ,'MM/dd/yyyy')
   when base.FISCAL_MONTH = '' and base.[Fiscal Year] = ''  and base.[Assess Year] >= '2017/18' and [Completed] = 0  and  LOWER([Bill Cycle]) like 'jul%' then  FORMAT(TRY_CONVERT(date,CONCAT('12','/','31','/',(CONVERT(int,SUBSTRING(base.[Assess Year],0,CHARINDEX('/', base.[Assess Year])) )-1 ))) ,'MM/dd/yyyy')
