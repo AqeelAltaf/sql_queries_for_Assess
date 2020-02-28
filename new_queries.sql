@@ -102,7 +102,7 @@ BEGIN
 			      when @AssessYear =   '2016/17' and count([Count of Letter]) over( partition By [Count of Letter] ) > 1 then CONCAT('01/0',right(@NoticeType, 1),'/1901')
 		 	     else  Convert(varchar(30),[Letter Date],102)  end
 		  from 
-		(select Top 2 
+		(select Top 1
 		  [Letter Date] , 
 		  COUNT( [Letter Date] ) as [Count of Letter]
 		from 
@@ -169,10 +169,17 @@ ALTER VIEW dbo.VW_IMIS_AccountExemptStatus
 as 
 -- this view contains all the latest assess records which have Exempt Status  =  'Exempt – Business Size (Revenue) 1 year'
 select  * ,'Exempt – Business Size (Revenue) 1 year' as [Exempt Status] 
-from  (select assess.ID  , assess.Assess_Year ,IMIS_name.Status ,EXEMPT_CODE ,  ROW_NUMBER() over(PARTITION BY assess.ID  ORDER BY assess.Assess_Year DESC) as rn
+from  
+(
+select assess.ID  
+, assess.Assess_Year 
+,IMIS_name.Status 
+,EXEMPT_CODE 
+,ROW_NUMBER() over(PARTITION BY assess.ID  ORDER BY assess.Assess_Year DESC) as rn
+, Superseded
 from IMIS.dbo.Assess  assess 
 LEFT JOIN IMIS.dbo.Name IMIS_name on assess.ID =  IMIS_name.ID ) _ 
-where rn = 1 and EXEMPT_CODE in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') and Status  != 'D'
+where rn = 1 and EXEMPT_CODE in ('MVDOUT','NOTOUR','UNDER1','UNDER8','UNDR1','UNDR20','UNDR50') and  Superseded = 0 and Status  != 'D'
 
 
 
@@ -193,3 +200,20 @@ select CONCAT(SEQN,'-',ID) as [External ID]
 INNER JOIN IMIS.dbo.Assess assess on acc_tour.[Tourism ID] = assess.ID
 where assess.COMPLETE =  0 
 and assess.EXEMPT_CODE =  '') base where [Primary Percent Tourism] =  0 
+
+
+
+
+-- function to get count of distinct Fiscal Months for the bill by  from their children
+ALTER FUNCTION dbo.get2017FiscalMonthfromAssessfor(@ID varchar(255))  
+RETURNS VARCHAR(255) as
+BEGIN
+RETURN (
+select
+count(distinct case when FISCAL_MONTH != '' then FORMAT(CONVERT(INT,[FISCAL_MONTH]), '00')  else '' end )
+ from IMIS.dbo.Assess assess 
+RIGHT JOIN BOOMI_DEV.dbo.PRODAccounts acc ON assess.ID = acc.TOURISM_ID__C
+where  acc.BILL_TO_PARENT__C = @Parent and acc.CATEGORY_TYPE__C != 'Exempt' and assess.ASSESS_YEAR in ('2017/18','2018/19','2019/20') and assess.FISCAL_MONTH != '' 
+)  
+End
+go

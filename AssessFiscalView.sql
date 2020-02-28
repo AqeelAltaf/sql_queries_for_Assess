@@ -39,11 +39,11 @@ select SEQN
             FIRST_VALUE( assess.FISCAL_MONTH ) OVER ( 
             PARTITION BY assess.Id
             ORDER BY assess.ASSESS_YEAR DESC,
-            case when assess.ASSESS_YEAR < '2016/17' or Superseded = 1 then '' ELSE FISCAL_MONTH end ASC
+            case when assess.ASSESS_YEAR < '2016/17' or Superseded = 1 then '99' ELSE FISCAL_MONTH end ASC
 	    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) 
         else ''  end as [Fn Fiscal Month]
 
-from IMIS.dbo.Assess  ) base   where [flag] = 'our row' and [Fn Assess Year] >= '2017/18' and ([Fn Fiscal Year] != '' or [Fn Fiscal Month]!= '')
+from IMIS.dbo.Assess  ) base   where [flag] = 'our row' and [Fn Assess Year] >= '2017/18' and ([Fn Fiscal Year] != '' or [Fn Fiscal Month] != '')
 
 
 select  ID, ASSESS_YEAR  , count(* ) from dbo.VW_IMIS_Asess_Fiscals  GRoup By ID, ASSESS_YEAR  having count(*) > 1

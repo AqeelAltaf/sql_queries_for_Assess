@@ -2,6 +2,7 @@ ALTER VIEW [dbo].[VW_IMIS_rev_Assess]
 AS
  ( 
    select
+   base.FISCAL_MONTH as [fn Fiscal Month], 
 [System IMIS Assess Cal],
 base.[Account],
  --  Amended From != '' then true else false
@@ -146,8 +147,7 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
  Under1M_BeginDate as Under1M_BeginDate,
  Under1M_EndDate as Under1M_EndDate,
  case when FISCAL_YEAR != '' then FISCAL_YEAR 
-      when assess_fiscal.[Fiscal Year] != ''  and assess_fiscal.[Fiscal Year] is not Null  then convert(varchar(4),assess_fiscal.[Fiscal Year])
-       
+      when assess_fiscal.[Fiscal Year] != ''  and assess_fiscal.[Fiscal Year] is not Null  then convert(varchar(4),assess_fiscal.[Fiscal Year])  
  else  ''  end  as [Fiscal Year],
  IMIS_name.STATUS as [Status Flag],
  -- Use external id to populate this field
@@ -193,14 +193,22 @@ concat(base.[External Id],'-',base.[Account]) as [External Id]
   Format(assess_notice.N_DueDate,'MM/dd/yyyy') as [Interest Start Date],
   assess.Filed_online as 'Filed Online',
   case when assess.Fiscal_Month != '' then RIGHT('0'+assess.Fiscal_Month,2)  
+  when assess.FISCAL_MONTH = '' and assess.ASSESS_YEAR >= '2017/18' and assess.READY_TO_POST = 0   then
+  (select TOP 1  RIGHT('0'+FISCAL_MONTH,2)  from IMIS.dbo.Assess _ where _.ID = assess.ID and ASSESS_YEAR >= '2017/18' and   Superseded != 1 and FISCAL_MONTH != '' ORDER BY ASSESS_YEAR DESC) 
+  else '' end 
+  as [Fiscal_Month],
+  /* case  when assess.Fiscal_Month != '' then RIGHT('0'+assess.Fiscal_Month,2) 
+         when assess_fiscal.[Fiscal Month] != ''  and assess_fiscal.[Fiscal Month] is not Null  then RIGHT('0'+assess_fiscal.[Fiscal Month],2)       
+         else  ''  end  as [Fiscal_Month],
+
+  case when assess.Fiscal_Month != '' then RIGHT('0'+assess.Fiscal_Month,2)  
   when assess.FISCAL_MONTH = '' and assess.ASSESS_YEAR >= '2017/18' and assess.READY_TO_POST = 0   then 
       FIRST_VALUE( assess.FISCAL_MONTH ) OVER ( 
         PARTITION BY assess.Id
         ORDER BY assess.ASSESS_YEAR DESC,
                 case when assess.ASSESS_YEAR < '2016/17' or Superseded = 1 then '' ELSE FISCAL_MONTH end ASC
 	      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) 
-     
-    else ''  end as [Fiscal_Month],
+    else ''  end as [Fiscal_Month],*/
   assess.GROSS_RECEIPTS as 'Gross Reciept',
   --All the exempt codes will be mapped to "Exempt – Other" picklist value except UNDER1  and NOTOUR, in case of these set IMIS assessment cal to 0 and keep these codes as is in this picklist
   case when assess.Exempt_Code not in  ('NOTOUR','UNDER1') then  assess.ASSESSMENT_CALC  else  0  end as [IMIS Assessment Calculation],
